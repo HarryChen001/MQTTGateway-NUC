@@ -78,33 +78,7 @@ int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
 	}
 
 	return 0;
-}/*
-int subscribe(char* subscribetopic, int Qos)
-{
-	int res = 0;
-	char product_key[IOTX_PRODUCT_KEY_LEN] = { 0 };
-	char device_name[IOTX_DEVICE_NAME_LEN] = { 0 };
-	const char* fmt = "/%s/%s/user/get";
-	char* topic = NULL;
-	int topic_len = 0;
-
-	topic_len = strlen(fmt) + strlen(product_key) + strlen(device_name) + 1;
-	if (topic_len > CONFIG_MQTT_TOPIC_MAXLEN) {
-		printf("topic too long\n");
-		return -1;
-	}
-	topic = g_topic_name;
-	memset(topic, 0, CONFIG_MQTT_TOPIC_MAXLEN);
-	printf(topic, topic_len, fmt, product_key, device_name);
-
-	res = IOT_MQTT_Subscribe(handle, topic, IOTX_MQTT_QOS0, example_message_arrive, NULL);
-	if (res < 0) {
-		printf("subscribe failed\n");
-		return -1;
-	}
-
-	return 0;
-}*/
+}
 
 int MyAliyunMqtt::publish(char* publishtopic, int Qos, char* payload)
 {
@@ -217,7 +191,7 @@ int MyAliyunMqtt::MqttMain(void* Params)
 	int loop_cnt = 0;
 
 	point->MqttInit(MqttInfo[0].ServerLink, MqttInfo[0].ServerPort, MqttInfo[0].ClientId, MqttInfo[0].UserName, MqttInfo[0].Password);
-	int res = point->subscribe(ThemeUpload[0].CtrlPub, ThemeUpload[0].QosPub);
+	int res = point->subscribe("/sys/a1D8ZmAY7J6/uRiD38Mfbp2mwjocOPrX/thing/service/property/set", 1);
 	if (res < 0) {
 		IOT_MQTT_Destroy(&(point->pclient));
 		return -1;
