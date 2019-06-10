@@ -12,6 +12,7 @@ RM := rm -rf
 -include LIB/common/sqlite3pp/subdir.mk
 -include LIB/common/libserial/subdir.mk
 -include LIB/common/cJSON/subdir.mk
+-include LIB/common/base64/subdir.mk
 -include subdir.mk
 -include objects.mk
 

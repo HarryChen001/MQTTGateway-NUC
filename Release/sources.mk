@@ -23,6 +23,7 @@ CPP_DEPS :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
+LIB/common/base64 \
 LIB/common/cJSON \
 LIB/common/libserial \
 LIB/common/sqlite3pp \
