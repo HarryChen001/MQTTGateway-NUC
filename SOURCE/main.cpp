@@ -42,35 +42,38 @@ ThemeUpload_t ThemeUpload[10];
 ThemeUploadList_t ThemeUploadList[100];
 VarParam_t VarParam[100];
 #define BASE64_ENCODE_TEST
-#define BASE64_DECODE_TEST 1
+#define BASE64_DECODE_TEST
+#define SERIAL_TEST
 int main(int argc, char* argv[])
 {
 #ifdef BASE64_ENCODE_TEST
-	while(1)
-	{
-		char buff[1024];
-		cin.getline(buff,1024);
-		int base64data_length = strlen(buff);
-		int encoded_data_length = Base64encode_len(base64data_length);
-		char* base64_string = (char*)malloc(encoded_data_length);
-		Base64encode(base64_string,buff,base64data_length);
-		cout << base64_string << endl;
-		free(base64_string);
-	}
-#elif BASE64_DECODE_TEST
-	while(1)
-	{
-		char buff[1024];
-		char deststring[1024];
-		cin.getline(buff,1024);
-		Base64decode(deststring,buff);
-		cout << deststring << endl;
-	}
+	if(!strcmp("base64encode",argv[1]))
+		while(1)
+		{
+			char buff[1024];
+			cin.getline(buff,1024);
+			int base64data_length = strlen(buff);
+			int encoded_data_length = Base64encode_len(base64data_length);
+			char* base64_string = (char*)malloc(encoded_data_length);
+			Base64encode(base64_string,buff,base64data_length);
+			cout << base64_string << endl;
+			free(base64_string);
+		}
+#endif
+#ifdef BASE64_DECODE_TEST
+	if(!strcmp("base64decode",argv[1]))
+		while(1)
+		{
+			char buff[1024];
+			char deststring[1024];
+			cin.getline(buff,1024);
+			Base64decode(deststring,buff);
+			cout << deststring << endl;
+		}
 #endif
 
 
 #ifdef modbus_tcp
-#define
 	modbus_t* mb;
 	mb = modbus_new_tcp("192.168.1.23",1502);
 	modbus_set_slave(mb,1);
@@ -102,42 +105,31 @@ int main(int argc, char* argv[])
 	}
 #endif
 
-/*	Serial s;
-	char dev[20];
-//	sprintf(dev,"%s%s","/dev/ttyS",argv[1]);
-	if (s.open(argv[1], 115200, 8,'N', 1) != Serial::OK)
+#ifdef SERIAL_TEST
+	if(!strcmp("serialdebug",argv[1]))
 	{
-		printf("Cannot open serial port!\n");
-		return -1;
-	}
-	char buff[1024];
-	while(1)
-	{
-		cin.getline(buff,1024);
-		strcat(buff,"\r\n");
+		Serial s;
+		if (s.open(argv[2], 115200, 8,'N', 1) != Serial::OK)
+		{
+			printf("Cannot open serial port!\n");
+			return -1;
+		}
+		char buff[1024];
+		while(1)
+		{
+			cin.getline(buff,1024);
+			strcat(buff,"\r\n");
+			s.write(buff, strlen(buff));
 
-		system("echo 1 > /sys/class/gpio/gpio46/value");
-		s.write(buff,strlen(buff));
-		system("echo 0 > /sys/class/gpio/gpio46/value");
-	}*/
+		}
+	}
+#endif
 	MySqlite db(argv[1]);
 	db.GetAllInfo();
 
 	MyAliyunMqtt Mqtt;
 	Mqtt.openthread();
 
-/***********************************���Դ���**************************************/
-/*	Serial s;
-	if (s.open("/dev/ttyS0", 115200, 8,'N', 1) != Serial::OK)
-	{
-		printf("Cannot open serial port!\n");
-		return -1;
-	}
-	char test[] = "test data";
-	s.write(test, strlen(test));
-	s.close();*/
-/***********************************���Դ���**************************************/
-	char input;
 	while (1)
 	{
 		sleep(1);
