@@ -1,0 +1,8 @@
+/main.d
+/main.o
+/soft_aliyunmqtt.d
+/soft_aliyunmqtt.o
+/soft_mymodbus.d
+/soft_mymodbus.o
+/soft_sqlite3pp.d
+/soft_sqlite3pp.o
