@@ -74,15 +74,6 @@ int main(int argc, char* argv[])
 	}
 #endif
 
-/*	system("echo 13 > /sys/class/gpio/export");
-	system("echo out > /sys/class/gpio/gpio13/direction");
-	while(1)
-	{
-		system("echo 1 > /sys/class/gpio/gpio13/value");
-		sleep(1);
-		system("echo 0 > /sys/class/gpio/gpio13/value");
-		sleep(1);
-	}*/
 /*	Serial s;
 	char dev[20];
 //	sprintf(dev,"%s%s","/dev/ttyS",argv[1]);
