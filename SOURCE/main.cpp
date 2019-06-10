@@ -18,10 +18,6 @@
 
 #include "sqlite3pp/sqlite3pp.h"
 
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/rapidjson.h"
-
 #include "soft_sqlite3pp.h"
 
 #include "MyData.h"

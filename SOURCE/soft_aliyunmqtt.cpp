@@ -11,13 +11,6 @@
 #include "MyData.h"
 #include "soft_mymodbus.h"
 
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/pointer.h"
-
-#include "rapidjson/prettywriter.h"
-#include "rapidjson/rapidjson.h"
 //#include "rapidjson/document.h"
 //#include "rapidjson/stringbuffer.h"
 //#include "rapidjson/writer.h"
@@ -26,62 +19,7 @@
 
 using std::cout;
 using std::endl;
-using namespace rapidjson;
 
-#ifdef rapidjson
-void MyAliyunMqtt::message_arrive(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg)
-{
-	rapidjson::Document d;
-//	char* varname;
-	char varname[1024];
-	char* temp;
-	char value_re[10];
-	int value;
-	int nums = 0;
-	float buff;
-	MyAliyunMqtt* pointer = (MyAliyunMqtt*) pcontext;
-	iotx_mqtt_topic_info_t* topic_info = (iotx_mqtt_topic_info_pt)msg->msg;
-	switch (msg->event_type) {
-	case IOTX_MQTT_EVENT_PUBLISH_RECEIVED:
-		// print topic name and topic message
-		printf("Message Arrived: \n");
-		printf("Topic  : %.*s\n", topic_info->topic_len, topic_info->ptopic);
-		printf("Payload: %.*s\n", topic_info->payload_len, topic_info->payload);
-		printf("\n");
-		pointer->getmessage = true;
-		strcpy(pointer->payload, topic_info->payload);
-		temp = strstr(topic_info->payload,"params\":{")+strlen("params\":{\"");
-		if(temp != NULL)
-			cout << "temp is " << temp << endl;
-		else
-			cout << "NULL" << endl;
-		while(*(temp+nums) != '\"')
-		{
-			varname[nums] = *(temp+nums);
-			nums++;
-		}
-		varname[nums] = '\0';
-//		varname = (char*)d["params"].GetString();
-		cout << varname << endl;
-		temp = strstr(topic_info->payload,varname);
-		while(*(temp++) != ':');
-		nums = 0;
-		while(*(temp+nums) != '}')
-		{
-			value_re[nums] = *(temp+nums);
-			nums++;
-		}
-		value_re[nums] = '\0';
-		value = atoi(value_re);
-//		value = d["params"][varname].GetInt();
-		cout << "value is " << value << std::endl;
-		modbus_set(1, value, varname, &buff);
-		break;
-	default:
-		break;
-	}
-}
-#endif
 void MyAliyunMqtt::message_arrive(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg)
 {
 	char* varname;

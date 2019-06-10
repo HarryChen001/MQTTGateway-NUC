@@ -20,7 +20,7 @@ CPP_DEPS += \
 LIB/common/sqlite3pp/%.o: ../LIB/common/sqlite3pp/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: Cross G++ Compiler'
-	arm-linux-g++ -std=c++0x -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/common" -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libaliyun/include" -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/common/rapidjson" -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/common/sqlite3pp" -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libsqlite/include" -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/common/libserial" -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libmodbus/include" -O3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	arm-linux-g++ -std=c++0x -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/common" -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libaliyun/include" -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/common/sqlite3pp" -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libsqlite/include" -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/common/libserial" -I"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libmodbus/include" -O3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
