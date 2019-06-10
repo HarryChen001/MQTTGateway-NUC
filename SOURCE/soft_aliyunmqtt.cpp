@@ -279,7 +279,7 @@ int MyAliyunMqtt::MqttMain(void* Params)
 	int loop_cnt = 0;
 
 	point->MqttInit(MqttInfo[0].ServerLink, MqttInfo[0].ServerPort, MqttInfo[0].ClientId, MqttInfo[0].UserName, MqttInfo[0].Password);
-	int res = point->subscribe(ThemeCtrl[0].CtrlSub, 1);
+	int res = point->subscribe(ThemeUpload[0].CtrlPub, ThemeUpload[0].QosPub);
 	if (res < 0) {
 		IOT_MQTT_Destroy(&(point->pclient));
 		return -1;
