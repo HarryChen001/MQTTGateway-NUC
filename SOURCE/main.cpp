@@ -1,16 +1,8 @@
 #include <iostream>
 #include <stdio.h>
-#include <cstdlib>
-#include <string>
 #include <cstring>
-#include <chrono>
-#include <unistd.h>
+#include <unistd.h>	//sleep()
 #include <thread>
-
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <net/if.h>
 
 #include "modbus/modbus-rtu.h"
 
@@ -22,7 +14,6 @@
 
 #include "MyData.h"
 
-//#include "soft_mqtt.h"
 #include "soft_aliyunmqtt.h"
 
 #include "soft_mymodbus.h"
@@ -41,9 +32,11 @@ ThemeCtrl_t ThemeCtrl[10];
 ThemeUpload_t ThemeUpload[10];
 ThemeUploadList_t ThemeUploadList[100];
 VarParam_t VarParam[100];
+
 #define BASE64_ENCODE_TEST
 #define BASE64_DECODE_TEST
 #define SERIAL_TEST
+
 int main(int argc, char* argv[])
 {
 #ifdef BASE64_ENCODE_TEST
@@ -71,7 +64,6 @@ int main(int argc, char* argv[])
 			cout << deststring << endl;
 		}
 #endif
-
 
 #ifdef modbus_tcp
 	modbus_t* mb;
@@ -120,7 +112,6 @@ int main(int argc, char* argv[])
 			cin.getline(buff,1024);
 			strcat(buff,"\r\n");
 			s.write(buff, strlen(buff));
-
 		}
 	}
 #endif
