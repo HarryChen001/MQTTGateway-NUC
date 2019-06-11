@@ -128,6 +128,7 @@ int main(int argc, char* argv[])
 			printf("Cannot open serial port!\n");
 			return -1;
 		}
+		s.openreadthread();
 		char buff[1024];
 		while(1)
 		{
