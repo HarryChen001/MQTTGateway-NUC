@@ -146,11 +146,11 @@ int Serial::open(const char* dev, int baud, int dataBits, char parityMode, int s
 		printf("setting serial success!\n");
 	}
 //	std::thread th(receiveThread, this);
-	if (pthread_create(&tid, 0, receiveThread, this) != 0)
+/*	if (pthread_create(&tid, 0, receiveThread, this) != 0)
 	{
 		printf("created thread fail!\n");
 		return NEW_THREAD_FAIL;
-	}
+	}*/
 	return OK;
 }
 
@@ -159,8 +159,11 @@ int Serial::close()
 	if (fd >= 0)
 	{
 		::close(fd);
-		pthread_cancel(tid);
-		pthread_mutex_destroy(&mutex);
+		if(tid)
+		{
+			pthread_cancel(tid);
+			pthread_mutex_destroy(&mutex);
+		}
 		fd = -1;
 	}
 }
