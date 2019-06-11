@@ -17,8 +17,9 @@ public:
 	*/
 	int subscribe(char* subscribetopic, int Qos);
 	int publish(char* publishtopic, int Qos,char* payload);
-	int openthread();
+	int openmainthread();
 	int openintervalthread();
+	int openrecparsethread();
 private:
 	void* pclient;
 	char payload[1024];
@@ -28,8 +29,10 @@ private:
 
 	std::thread threadid;
 	std::thread threadid_interval;
+	std::thread threadid_recparse;
 	static int MqttMain(void* Param);
 	static int MqttInterval(void* Param);
+	static int MqttRecParse(void* Param);
 };
 
 #endif

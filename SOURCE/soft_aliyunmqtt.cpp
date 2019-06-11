@@ -22,9 +22,6 @@ using std::endl;
 
 void MyAliyunMqtt::message_arrive(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg)
 {
-	char* varname;
-	int value;
-	float buff;
 	MyAliyunMqtt* pointer = (MyAliyunMqtt*) pcontext;
 	iotx_mqtt_topic_info_t* topic_info = (iotx_mqtt_topic_info_pt)msg->msg;
 	switch (msg->event_type) {
@@ -40,16 +37,6 @@ void MyAliyunMqtt::message_arrive(void* pcontext, void* pclient, iotx_mqtt_event
 	default:
 		break;
 	}
-	cJSON* json,*json_params;
-	json = cJSON_Parse(topic_info->payload);
-
-	json_params = cJSON_GetObjectItem(json,"params");
-
-	varname = json_params->child->string;
-	value = json_params->child->valueint;
-
-	modbus_set(1, value, varname, &buff);
-	cJSON_Delete(json);
 }
 int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
 {
@@ -74,7 +61,7 @@ int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
 	}
 	else
 	{
-		printf("topic is %s\n", subscribetopic);
+		printf("subscribe success,topic is:[%s]\n", subscribetopic);
 	}
 
 	return 0;
@@ -151,11 +138,6 @@ int MyAliyunMqtt::MqttInit(char* host,int port,char* clientid,char* username,cha
 MyAliyunMqtt::MyAliyunMqtt()
 {
 }
-int MyAliyunMqtt::openthread()
-{
-	threadid = std::thread(MqttMain, this);
-	return 0;
-}
 int MyAliyunMqtt::MqttInterval(void* Params)
 {
 	MyAliyunMqtt *point = (MyAliyunMqtt*)Params;
@@ -165,16 +147,52 @@ int MyAliyunMqtt::MqttInterval(void* Params)
 	}
 	return 0;
 }
+int MyAliyunMqtt::MqttRecParse(void* Params)
+{
+	MyAliyunMqtt *point = (MyAliyunMqtt*)Params;
+	float buff;
+	while(1)
+	{
+		if(point->getmessage == true)
+		{
+			cJSON* json,*json_params;
+			json = cJSON_Parse(point->payload);
+
+			json_params = cJSON_GetObjectItem(json,"params");
+			if(!json_params)
+			{
+				cout << "no params" << endl;
+			}
+			char* varname = json_params->child->string;
+			int value = json_params->child->valueint;
+
+			modbus_set(1, value, varname, &buff);
+			cJSON_Delete(json);
+			point->getmessage = false;
+		}
+		usleep(10000);
+	}
+	return 0;
+}
+int MyAliyunMqtt::openmainthread()
+{
+	threadid = std::thread(MqttMain, this);
+	return 0;
+}
 int MyAliyunMqtt::openintervalthread()
 {
 	threadid_interval = std::thread(MqttInterval,this);
+	return 0;
+}
+int MyAliyunMqtt::openrecparsethread()
+{
+	threadid_recparse = std::thread(MqttRecParse,this);
 	return 0;
 }
 int MyAliyunMqtt::MqttMain(void* Params)
 {
 	for(int i = 0; i < PortInfo[0].portcount; i++)
 	{
-		char str[100];
 		char buff[100];
 		sprintf(buff,"%s%d%s","echo ",PortInfo[i].gpio," > /sys/class/gpio/export");
 		cout << "buff1 is " << buff << endl;
@@ -196,8 +214,14 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		IOT_MQTT_Destroy(&(point->pclient));
 		return -1;
 	}
+	res = point->subscribe("/a1D8ZmAY7J6/uRiD38Mfbp2mwjocOPrX/user/get", 1);
+	if (res < 0) {
+		IOT_MQTT_Destroy(&(point->pclient));
+		return -1;
+	}
 
 	point->openintervalthread();		//create MQTT interval thread
+	point->openrecparsethread();
 	while (1)
 	{
 		time_t nowtime;
@@ -214,7 +238,6 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		cJSON_AddItemToObject(publish_json,"params",params_json = cJSON_CreateObject());
 
 		float temp;
-		char buff[100];
 		for (int i = 0; i < ThemeUploadList[0].UploadCount; i++)
 		{
 			cout << ThemeUploadList[i].VarName << endl;
