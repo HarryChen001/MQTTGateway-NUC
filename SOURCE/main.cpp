@@ -36,6 +36,7 @@ VarParam_t VarParam[100];
 #define BASE64_ENCODE_TEST
 #define BASE64_DECODE_TEST
 #define SERIAL_TEST
+#define BASE64_ENCODE_NUM_TEST
 
 int main(int argc, char* argv[])
 {
@@ -63,6 +64,27 @@ int main(int argc, char* argv[])
 			Base64decode(deststring,buff);
 			cout << deststring << endl;
 		}
+#endif
+#ifdef BASE64_ENCODE_NUM_TEST
+	if(!strcmp("base64encodenums",argv[1]))
+	{
+		while(1)
+		{
+			int nums[1024];
+			char buff[1024];
+			for(int i = 0;i < 8;i++)
+			{
+				cin >> nums[i];
+				buff[i] = nums[i];
+			}
+			int base64data_length = 8*sizeof(char);
+			int encoded_data_length = Base64encode_len(base64data_length);
+			char* base64_string = (char*)malloc(encoded_data_length);
+			Base64encode(base64_string,buff,base64data_length);
+			cout << base64_string << endl;
+			free(base64_string);
+		}
+	}
 #endif
 
 #ifdef modbus_tcp
