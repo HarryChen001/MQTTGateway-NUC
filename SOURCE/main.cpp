@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
 	db.GetAllInfo();
 
 	MyAliyunMqtt Mqtt;
-	Mqtt.openthread();
+	Mqtt.openmainthread();
 
 	while (1)
 	{
