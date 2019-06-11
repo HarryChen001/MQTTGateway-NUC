@@ -10,7 +10,8 @@
 #include "dev_sign_api.h"
 #include "MyData.h"
 #include "soft_mymodbus.h"
-
+#include "Serial.h"
+#include "base64/base64.h"
 //#include "rapidjson/document.h"
 //#include "rapidjson/stringbuffer.h"
 //#include "rapidjson/writer.h"
@@ -151,6 +152,7 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 {
 	MyAliyunMqtt *point = (MyAliyunMqtt*)Params;
 	float buff;
+	Serial s;
 	while(1)
 	{
 		if(point->getmessage == true)
@@ -159,14 +161,32 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 			json = cJSON_Parse(point->payload);
 
 			json_params = cJSON_GetObjectItem(json,"params");
-			if(!json_params)
+			if(json_params)
 			{
-				cout << "no params" << endl;
+				char* varname = json_params->child->string;
+				int value = json_params->child->valueint;
+				modbus_set(1, value, varname, &buff);
 			}
-			char* varname = json_params->child->string;
-			int value = json_params->child->valueint;
+			else if((json_params = cJSON_GetObjectItem(json,"COM")))
+			{
+				int com = json_params->valueint;
+				char dev[100];
+				char dest[1024];
+				cJSON* json_payload;
+				json_payload = cJSON_GetObjectItem(json,"payload");
+				sprintf(dev,"%s%d","/dev/ttyS",com);
 
-			modbus_set(1, value, varname, &buff);
+				int len = Base64decode(dest,json_payload->valuestring);
+				cout << "decode is : " << endl;
+				cout << dest << endl;
+				s.open(dev,115200,8,'N',1);
+				s.write(dest,len);
+				s.close();
+			}
+			else
+			{
+				exit(-1);
+			}
 			cJSON_Delete(json);
 			point->getmessage = false;
 		}
