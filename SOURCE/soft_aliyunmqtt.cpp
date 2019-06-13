@@ -83,6 +83,7 @@ int MyAliyunMqtt::publish(char* publishtopic, int Qos, char* payload)
 		printf("publish failed\n");
 		return -1;
 	}
+	cout << "publish success,payload is : " << payload << endl;
 	return 0;
 }
 void MyAliyunMqtt::event_handle(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg)
@@ -168,16 +169,54 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				int com = json_params->valueint;
 				char dev[100];
 				char dest[1024];
+				char readbuff[1024];
 				cJSON* json_payload;
 				json_payload = cJSON_GetObjectItem(json,"payload");
+				int ComIsResp = cJSON_GetObjectItem(json,"ComIsResp")->valueint;
+				int serialtimeout = 0;
+				if(ComIsResp)
+					serialtimeout = cJSON_GetObjectItem(json,"ComTimeoutMs")->valueint;
 				sprintf(dev,"%s%d","/dev/ttyS",com);
 
 				int len = Base64decode(dest,json_payload->valuestring);
-				cout << "decode is : " << endl;
-				cout << dest << endl;
+
 				s.open(dev,115200,8,'N',1);
 				s.write(dest,len);
+				int seriallen = s.read_wait(readbuff,1024,serialtimeout);
+				if(seriallen == 0)
+				{
+					cout << "read serial timeout!" << endl;
+				}
+				memset(dest,0,sizeof(dest));
+				Base64encode(dest,readbuff,seriallen);
 				s.close();
+
+				cJSON* response;
+				time_t nowtime;
+				char tmp[64];
+				char payload[1024];
+				nowtime = time(NULL); //get now time
+				strftime(tmp, sizeof(tmp), "%Y%m%d%H%M%S", localtime(&nowtime));
+
+				response = cJSON_CreateObject();
+				cJSON_AddNumberToObject(response,"COM",com);
+
+				if(!ComIsResp)
+				{
+					sprintf(payload,"%s%d %s","Com",com,"Compelete");
+				}
+				else
+					strcpy(payload,dest);
+
+				if(seriallen == 0)
+				{
+					sprintf(payload,"%s%d %s","Com",com,"Timeout");
+				}
+
+				cJSON_AddStringToObject(response,"Time",tmp);
+				cJSON_AddStringToObject(response,"payload",payload);
+				point->publish(ThemeCtrl[0].CtrlPub,1,cJSON_PrintUnformatted(response));
+				cJSON_Delete(response);
 			}
 			else
 			{
@@ -222,12 +261,7 @@ int MyAliyunMqtt::MqttMain(void* Params)
 	int loop_cnt = 0;
 
 	point->MqttInit(MqttInfo[0].ServerLink, MqttInfo[0].ServerPort, MqttInfo[0].ClientId, MqttInfo[0].UserName, MqttInfo[0].Password);
-	int res = point->subscribe((char*)"/sys/a1D8ZmAY7J6/uRiD38Mfbp2mwjocOPrX/thing/service/property/set", 1);
-	if (res < 0) {
-		IOT_MQTT_Destroy(&(point->pclient));
-		return -1;
-	}
-	res = point->subscribe((char*)"/a1D8ZmAY7J6/uRiD38Mfbp2mwjocOPrX/user/get", 1);
+	int res = point->subscribe(ThemeCtrl[0].CtrlSub, 1);
 	if (res < 0) {
 		IOT_MQTT_Destroy(&(point->pclient));
 		return -1;
