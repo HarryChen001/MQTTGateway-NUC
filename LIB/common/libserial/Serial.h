@@ -70,6 +70,8 @@ public:
 
 	int openreadthread();
 
+	int read_wait(char* buff,int len,int timeout);
+
 private:
 	//�������Ͳ�����ת��Ϊϵͳ���ò���
 	int transformBaud(int baud);

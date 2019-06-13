@@ -1,5 +1,6 @@
 #include "Serial.h"
 #include "Timestamp.h"
+#include <iostream>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -10,10 +11,9 @@
 #include <thread>
 #include "sqlite3pp/sqlite3pp.h"
 #include "sqlite3pp/sqlite3ppext.h"
-int test0()
-{
-	return 100;
-}
+
+using std::cout;
+using std::endl;
 Serial::Serial(char* dev) :stream()
 {
 	printf("create database");
@@ -50,7 +50,40 @@ void* receiveThread(void* arg)
 		usleep(1000);
 	}
 }
-
+int Serial::read_wait(char* buff,int len,int timeout)
+{
+	int bytetimeout = 0;
+	int replytimeout = 0;
+	int totallen = 0;
+	if(timeout == 0)
+	{
+		timeout = 3000;
+	}
+	while (1)
+	{
+		int len = ::read(fd, buff, sizeof(buff));
+		if(len > 0)
+		{
+			totallen+=len;
+			buff+=len;
+			bytetimeout = 0;
+			replytimeout = 0;
+		}
+		usleep(1000);
+		replytimeout++;;
+		if(replytimeout >= timeout)
+		{
+			return totallen;
+		}
+		bytetimeout++;
+		if(bytetimeout == 1000)
+		{
+			if(totallen > 0)
+				return totallen;
+		}
+	}
+	return 0;
+}
 int Serial::open(const char* dev, int baud, int dataBits, char parityMode, int stopBits)
 {
 	fd = ::open(dev, O_RDWR, O_NOCTTY | O_NONBLOCK);
@@ -145,7 +178,6 @@ int Serial::open(const char* dev, int baud, int dataBits, char parityMode, int s
 	{
 		printf("setting serial success!\n");
 	}
-
 	return OK;
 }
 int Serial::openreadthread()
