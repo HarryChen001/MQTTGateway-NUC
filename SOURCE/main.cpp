@@ -65,6 +65,20 @@ int main(int argc, char* argv[])
 			cout << deststring << endl;
 		}
 #endif
+#ifdef BASE64_DECODE_TEST
+	if(!strcmp("base64decodenums",argv[1]))
+		while(1)
+		{
+			char buff[1024];
+			char deststring[1024];
+			cin.getline(buff,1024);
+			Base64decode(deststring,buff);
+			for(int i = 0;i < 7;i++)
+			{
+				printf("%d",deststring[i]);
+			}
+		}
+#endif
 #ifdef BASE64_ENCODE_NUM_TEST
 	if(!strcmp("base64encodenums",argv[1]))
 	{
