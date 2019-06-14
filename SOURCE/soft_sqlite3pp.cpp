@@ -115,6 +115,8 @@ int MySqlite::GetAllInfo()
 				PortInfo[j].gpio = 0x67;
 		else if(PortInfo[j].PortNum == 1)
 				PortInfo[j].gpio = 0x84;
+		else
+			PortInfo[j].gpio = -1;
 		PortInfo[j].baud = (*i).get<int>(5);
 		PortInfo[j].DataBits = (*i).get<int>(7);
 		PortInfo[j].StopBits = (*i).get<int>(8);
