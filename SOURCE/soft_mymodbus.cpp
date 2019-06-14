@@ -130,12 +130,6 @@ int modbus_set(int write,int inputdata, char* varname,float* buff_dest)
 				res = modbus_write_register(mb, VarParam[varsubscript].RegAdr, inputdata);
 		}
 	}
-//	*buff_dest=modbus_get_float_dcba(&buff[0]);
-//	cout << "buff[0] is " << buff[0] << endl;
-//	cout << "buff_dest is " << *buff_dest << endl;
-	*buff_dest=buff[0]*VarParam[varsubscript].modules;
-	uint16_t a[2] = {0x0020,0xf147};
-	cout << modbus_get_float_dcba(a) << endl;
 
 	modbus_free(mb);
 	modbus_close(mb);
