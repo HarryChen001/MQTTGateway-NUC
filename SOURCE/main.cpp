@@ -20,6 +20,8 @@
 
 #include "base64/base64.h"
 
+#include "soft_myfunction.h"
+
 using std::cin;
 using std::cout;
 using std::endl;
