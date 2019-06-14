@@ -18,6 +18,8 @@
 
 #include "cJSON/cJSON.h"
 
+#include "soft_myfunction.h"
+
 using std::cout;
 using std::endl;
 
@@ -170,7 +172,16 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				char dev[100];
 				char dest[1024];
 				char readbuff[1024];
+				char buff[100];
+				int gpio = PortInfo[getportinfosubscript(PortInfo,com)].gpio;
+				sprintf(buff,"%s%d%s","echo ",gpio," > /sys/class/gpio/export");
+				system(buff);
+				sprintf(buff,"%s%d%s","echo out > /sys/class/gpio/gpio",gpio,"/direction");
+				system(buff);
+				sprintf(buff,"%s%d%s","echo 1 > /sys/class/gpio/gpio",gpio,"/value");
+				system(buff);
 				cJSON* json_payload;
+
 				json_payload = cJSON_GetObjectItem(json,"payload");
 				int ComIsResp = cJSON_GetObjectItem(json,"ComIsResp")->valueint;
 				int serialtimeout = 0;
@@ -181,7 +192,10 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				int len = Base64decode(dest,json_payload->valuestring);
 
 				s.open(dev,115200,8,'N',1);
+
 				s.write(dest,len);
+				sprintf(buff,"%s%d%s","echo 0 > /sys/class/gpio/gpio",gpio,"/value");
+				system(buff);
 				int seriallen = s.read_wait(readbuff,1024,serialtimeout);
 				if(seriallen == 0)
 				{
