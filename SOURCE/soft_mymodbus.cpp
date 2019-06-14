@@ -59,7 +59,6 @@ int modbus_set(int write,int inputdata, char* varname,float* buff_dest)
 	}
 	sprintf(serialport, "%s%d", "/dev/ttyS", PortInfo[portsubscript].PortNum);
 
-//	cout << "create modbus ,port is " << serialport << endl;
 
 	char parity = PortInfo[portsubscript].Parity[0];
 	mb = modbus_new_rtu(serialport,PortInfo[portsubscript].baud, parity,8 - PortInfo[portsubscript].DataBits,1 - PortInfo[portsubscript].StopBits);

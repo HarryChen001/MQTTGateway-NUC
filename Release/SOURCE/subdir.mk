@@ -6,18 +6,21 @@
 CPP_SRCS += \
 ../SOURCE/main.cpp \
 ../SOURCE/soft_aliyunmqtt.cpp \
+../SOURCE/soft_myfunction.cpp \
 ../SOURCE/soft_mymodbus.cpp \
 ../SOURCE/soft_sqlite3pp.cpp 
 
 OBJS += \
 ./SOURCE/main.o \
 ./SOURCE/soft_aliyunmqtt.o \
+./SOURCE/soft_myfunction.o \
 ./SOURCE/soft_mymodbus.o \
 ./SOURCE/soft_sqlite3pp.o 
 
 CPP_DEPS += \
 ./SOURCE/main.d \
 ./SOURCE/soft_aliyunmqtt.d \
+./SOURCE/soft_myfunction.d \
 ./SOURCE/soft_mymodbus.d \
 ./SOURCE/soft_sqlite3pp.d 
 
