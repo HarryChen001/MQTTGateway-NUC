@@ -12,22 +12,45 @@ using std::endl;
 
 int portsubscript;
 
-void setrts(modbus_t *ctx, int on)
+void setrts(modbus_t* ctx, int on)
 {
 	char control[100];
-	if(on == 1)
+	if (on == 1)
 	{
-		sprintf(control,"%s%d%s","echo 1 > /sys/class/gpio/gpio",PortInfo[portsubscript].gpio,"/value");
+		sprintf(control, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", PortInfo[portsubscript].gpio, "/value");
 		system(control);
 	}
 	else
 	{
-		sprintf(control,"%s%d%s","echo 0 > /sys/class/gpio/gpio",PortInfo[portsubscript].gpio,"/value");
+		sprintf(control, "%s%d%s", "echo 0 > /sys/class/gpio/gpio", PortInfo[portsubscript].gpio, "/value");
 		system(control);
 	}
 }
 
-int modbus_set(int write,int inputdata, char* varname,float* buff_dest)
+void ByteChange(uint16_t* buff,int nums,int endian,int byteorder)
+{
+	if (!endian)
+	{
+		for (int i = 0; i < nums / 2; i++)
+		{
+			uint16_t temp;
+			temp = buff[nums - 1 - i];
+			buff[nums - 1 - i] = buff[i];
+			buff[i] = temp;
+			buff[nums - 1 - i] = (buff[nums - 1 - i] << 8 | buff[nums - 1 - i] >> 8);
+			buff[i] = (buff[i] << 8 | buff[i] >> 8);
+		}
+	}
+	if (!byteorder)
+	{
+		for (int i = 0; i < nums; i++)
+		{
+			buff[i] = (buff[i] << 8 | buff[i] >> 8);
+		}
+	}
+}
+
+int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 {
 	modbus_t* mb;
 	int varsubscript = 0;
@@ -35,7 +58,8 @@ int modbus_set(int write,int inputdata, char* varname,float* buff_dest)
 	int devsubscript = 0;
 	char serialport[20];
 	uint16_t buff[10];
-	for (int i = 0; i < VarParam[0].VarCount;i++)
+	uint16_t write_buff[10];
+	for (int i = 0; i < VarParam[0].VarCount; i++)
 	{
 		if (!strcmp(VarParam[i].VarName, varname))
 		{
@@ -59,27 +83,29 @@ int modbus_set(int write,int inputdata, char* varname,float* buff_dest)
 	}
 	sprintf(serialport, "%s%d", "/dev/ttyS", PortInfo[portsubscript].PortNum);
 
-
 	char parity = PortInfo[portsubscript].Parity[0];
-	mb = modbus_new_rtu(serialport,PortInfo[portsubscript].baud, parity,8 - PortInfo[portsubscript].DataBits,1 - PortInfo[portsubscript].StopBits);
-	if (mb == NULL) {
+	mb = modbus_new_rtu(serialport, PortInfo[portsubscript].baud, parity, 8 - PortInfo[portsubscript].DataBits, 1 - PortInfo[portsubscript].StopBits);
+	if (mb == NULL)
+	{
 		printf("Unable to create the libmodbus context\n");
-		//	    return -1;
+		return -1;
 	}
-#ifdef modbus_debuf
+#ifdef modbus_debug
 	modbus_set_debug(mb, 1);
 #endif
 	modbus_set_slave(mb, DevInfo[devsubscript].address);
+#ifndef gcc
 	int ret = -1;
-	while(ret == -1)
+	while (ret == -1)
 	{
 		ret = modbus_rtu_set_rts(mb, MODBUS_RTU_RTS_UP);
 	}
 	ret = -1;
-	while(ret == -1)
+	while (ret == -1)
 	{
-		ret = modbus_rtu_set_custom_rts(mb,setrts);
+		ret = modbus_rtu_set_custom_rts(mb, setrts);
 	}
+#endif
 	if (modbus_connect(mb) == -1)
 	{
 		printf("Modbus Connection failed\n");
@@ -90,15 +116,94 @@ int modbus_set(int write,int inputdata, char* varname,float* buff_dest)
 	t.tv_sec = 0;
 	t.tv_usec = 500000;
 	modbus_set_response_timeout(mb, t.tv_sec, t.tv_usec);
-	modbus_set_byte_timeout(mb,t.tv_sec,t.tv_usec);
-	if(!write)
+	modbus_set_byte_timeout(mb, t.tv_sec, t.tv_usec);
+	if (!write)
 		memset(buff, 0, sizeof(buff));
 	int res = -1;
-	int count  = 0;
-	while(res == -1)
+	int count = 0;
+	int regnums = 1;
+
+	int regdian = DevInfo[devsubscript].regedian;
+	int byteorder = DevInfo[devsubscript].byteorder;
+
+//	regdian = 1;
+//	byteorder = 1;
+	//	strcpy(VarParam[varsubscript].DataType, "int32");
+	if (write)
+	{
+		cout << "inputdata is " << inputdata << endl;
+		memset(write_buff, 0, sizeof(write_buff));
+		MODBUS_SET_INT64_TO_INT16(write_buff, 0, (int64_t)inputdata);
+	}
+	if (!strcmp("uint16", VarParam[varsubscript].DataType))
+	{
+		datatype = uint16;
+		regnums = 1;
+		write_buff[0] = write_buff[3];
+	}
+	else if (!strcmp("uint32", VarParam[varsubscript].DataType))
+	{
+		datatype = uint32;
+		regnums = 2;
+		write_buff[0] = write_buff[2];
+		write_buff[1] = write_buff[3];
+	}
+	else if (!strcmp("uint64", VarParam[varsubscript].DataType))
+	{
+		datatype = uint64;
+		regnums = 4;
+	}
+	else if (!strcmp("int16", VarParam[varsubscript].DataType))
+	{
+		datatype = int16;
+		regnums = 1;
+		write_buff[0] = write_buff[3];
+	}
+	else if (!strcmp("int32", VarParam[varsubscript].DataType))
+	{
+		datatype = int32;
+		regnums = 2;
+		write_buff[0] = write_buff[2];
+		write_buff[1] = write_buff[3];
+	}
+	else if (!strcmp("int64", VarParam[varsubscript].DataType))
+	{
+		datatype = int64;
+		regnums = 4;
+	}
+	else if (!strcmp("double", VarParam[varsubscript].DataType))
+	{
+		datatype = double_type;
+		regnums = 4;
+	}
+	else if (!strcmp("float", VarParam[varsubscript].DataType))
+	{
+		datatype = float_type;
+		regnums = 2;
+		if (regdian && byteorder)
+		{
+			modbus_set_float_dcba(inputdata, write_buff);
+		}
+		else if (!regdian && byteorder)
+		{
+			modbus_set_float_abcd(inputdata, write_buff);
+		}
+		else if (regdian && !byteorder)
+		{
+			modbus_set_float_cdab(inputdata, write_buff);
+		}
+		else if (!regdian && !byteorder)
+		{
+			modbus_set_float_badc(inputdata, write_buff);
+		}
+	}
+	if(datatype != int16 && datatype != uint16 && datatype != double_type && datatype != float_type)
+		ByteChange(write_buff, regnums, regdian, byteorder);
+
+	while (res == -1)
 	{
 		count++;
-		if(count >= 5)
+		if (count >= 5)
 			break;
 		if (!strcmp("B0", VarParam[varsubscript].RegType))
 		{
@@ -109,33 +214,74 @@ int modbus_set(int write,int inputdata, char* varname,float* buff_dest)
 		}
 		else if (!strcmp("B1", VarParam[varsubscript].RegType))
 		{
-			if(!write)
+			if (!write)
 				res = modbus_read_input_bits(mb, VarParam[varsubscript].RegAdr, 1, (uint8_t*)buff);
-			else
-				res = modbus_write_bit(mb, VarParam[varsubscript].RegAdr, inputdata);
 		}
 		else if (!strcmp("W3", VarParam[varsubscript].RegType))
 		{
 			if (!write)
-				res = modbus_read_registers(mb, VarParam[varsubscript].RegAdr, 1, (uint16_t*)buff);
+				res = modbus_read_registers(mb, VarParam[varsubscript].RegAdr, regnums, (uint16_t*)buff);
 			else
-				res = modbus_write_register(mb, VarParam[varsubscript].RegAdr, inputdata);
+				res = modbus_write_registers(mb, VarParam[varsubscript].RegAdr, regnums, write_buff);
 
 		}
 		else if (!strcmp("W4", VarParam[varsubscript].RegType))
 		{
 			if (!write)
-				res = modbus_read_input_registers(mb, VarParam[varsubscript].RegAdr, 1, (uint16_t*)buff);
-			else
-				res = modbus_write_register(mb, VarParam[varsubscript].RegAdr, inputdata);
+				res = modbus_read_input_registers(mb, VarParam[varsubscript].RegAdr, regnums, (uint16_t*)buff);
 		}
 	}
 
-	modbus_free(mb);
-	modbus_close(mb);
-	if(strstr(VarParam[varsubscript].DataType,"float") || strstr(VarParam[varsubscript].DataType,"Double"))
+	if (write)
+		return 0;
+	if (regnums == 1)
 	{
-		return 1;
+		if (datatype == uint16)
+		{
+			*buff_dest = ((uint16_t)buff[0]) * VarParam[varsubscript].modules;
+		}
+		else
+		{
+			*buff_dest = ((int16_t)buff[0]) * VarParam[varsubscript].modules;
+		}
 	}
+	else if (datatype != double_type && datatype != float_type)
+	{
+		ByteChange(buff, regnums, regdian, byteorder);
+
+		if (datatype == uint32)
+		{
+			*buff_dest = (uint32_t)MODBUS_GET_INT32_FROM_INT16(buff, 0);
+		}
+		else if (datatype == uint64)
+		{
+			*buff_dest = (uint64_t)MODBUS_GET_INT64_FROM_INT16(buff, 0);
+		}
+		else if (datatype == int32)
+		{
+			*buff_dest = (int32_t)MODBUS_GET_INT32_FROM_INT16(buff, 0);
+		}
+		else if (datatype == int64)
+		{
+			*buff_dest = (int64_t)MODBUS_GET_INT64_FROM_INT16(buff, 0);
+		}
+	}
+	else if (datatype == float_type)
+	{
+		if (regdian && byteorder)
+			* buff_dest = (float)modbus_get_float_dcba(buff);
+		else if ((!regdian) && byteorder)
+			* buff_dest = modbus_get_float_abcd(buff);
+		else if (regdian && (!byteorder))
+			* buff_dest = modbus_get_float_cdab(buff);
+		else if ((!regdian) && (!byteorder))
+			* buff_dest = modbus_get_float_badc(buff);
+	}
+	else if (datatype == double_type)
+	{
+	//	cout << "double is " << static_cast<double>(MODBUS_GET_INT64_FROM_INT16(buff, 0));
+	}
+	modbus_close(mb);
+	modbus_free(mb);
 	return 0;
 }
