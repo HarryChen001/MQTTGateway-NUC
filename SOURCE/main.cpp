@@ -34,6 +34,7 @@ ThemeCtrl_t ThemeCtrl[10];
 ThemeUpload_t ThemeUpload[10];
 ThemeUploadList_t ThemeUploadList[100];
 VarParam_t VarParam[100];
+enumdatatype datatype;
 
 #define BASE64_ENCODE_TEST
 #define BASE64_DECODE_TEST
