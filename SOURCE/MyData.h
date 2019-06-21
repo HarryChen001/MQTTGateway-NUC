@@ -1,6 +1,9 @@
 #pragma once
 #ifndef _MY_DATA_H_
 #define _MY_DADA_H_
+enum enumdatatype{
+	uint16,uint32,uint64,int16,int32,int64,float_type,double_type
+};
 //�豸��������Ϣ
 typedef struct _DeviceInfo_t {
 	int id;					//devinfo id
@@ -117,5 +120,6 @@ extern ThemeCtrl_t ThemeCtrl[10];
 extern ThemeUpload_t ThemeUpload[10];
 extern ThemeUploadList_t ThemeUploadList[100];
 extern VarParam_t VarParam[100];
+extern enumdatatype datatype;
 
 #endif // !_MY_DATA_H_
