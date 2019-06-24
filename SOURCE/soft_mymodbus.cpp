@@ -11,6 +11,8 @@ using std::cout;
 using std::endl;
 
 int portsubscript;
+int varsubscript = 0;
+int devsubscript = 0;
 
 void setrts(modbus_t* ctx, int on)
 {
@@ -49,13 +51,34 @@ void ByteChange(uint16_t* buff,int nums,int endian,int byteorder)
 		}
 	}
 }
-
+void modbus_set_double_to_int16(uint16_t buff[], double input)
+{
+	doubleunion doubletype;
+	doubletype.doubletype = input;
+	MODBUS_SET_INT64_TO_INT16(buff, 0, doubletype.int64type);
+}
+double modbus_get_double_from_int16(uint16_t buff[])
+{
+	doubleunion doubletype;
+	doubletype.int64type = MODBUS_GET_INT64_FROM_INT16(buff, 0);
+	return doubletype.doubletype;
+}
+void modbus_set_float_to_int16(uint16_t buff[], float input)
+{
+	floatunion floattype;
+	floattype.floattype = input;
+	MODBUS_SET_INT32_TO_INT16(buff, 0, floattype.int32type);
+}
+float modbus_get_float_from_int16(uint16_t buff[])
+{
+	floatunion floattype;
+	floattype.int32type = MODBUS_GET_INT32_FROM_INT16(buff, 0);
+	return floattype.floattype;
+}
 int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 {
 	modbus_t* mb;
-	int varsubscript = 0;
 	int portid = 0;
-	int devsubscript = 0;
 	char serialport[20];
 	uint16_t buff[10];
 	uint16_t write_buff[10];
@@ -81,7 +104,7 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 		if (VarParam[varsubscript].DevId == DevInfo[i].id)
 			devsubscript = i;
 	}
-	sprintf(serialport, "%s%d", "/dev/ttyS", PortInfo[portsubscript].PortNum);
+	sprintf(serialport, "%s%d", "/dev/ttyS", PortInfo[portsubscript].PortNum - 10);
 
 	char parity = PortInfo[portsubscript].Parity[0];
 	mb = modbus_new_rtu(serialport, PortInfo[portsubscript].baud, parity, 8 - PortInfo[portsubscript].DataBits, 1 - PortInfo[portsubscript].StopBits);
@@ -175,29 +198,17 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 	{
 		datatype = double_type;
 		regnums = 4;
+		modbus_set_double_to_int16(write_buff, inputdata);
 	}
 	else if (!strcmp("float", VarParam[varsubscript].DataType))
 	{
 		datatype = float_type;
 		regnums = 2;
-		if (regdian && byteorder)
-		{
-			modbus_set_float_dcba(inputdata, write_buff);
-		}
-		else if (!regdian && byteorder)
-		{
-			modbus_set_float_abcd(inputdata, write_buff);
-		}
-		else if (regdian && !byteorder)
-		{
-			modbus_set_float_cdab(inputdata, write_buff);
-		}
-		else if (!regdian && !byteorder)
-		{
-			modbus_set_float_badc(inputdata, write_buff);
-		}
+		floatunion floattype;
+		floattype.floattype = inputdata;
+		modbus_set_float_to_int16(write_buff, floattype.floattype);
 	}
-	if(datatype != int16 && datatype != uint16 && datatype != double_type && datatype != float_type)
+	if(datatype != int16 && datatype != uint16 )
 		ByteChange(write_buff, regnums, regdian, byteorder);
 
 	while (res == -1)
@@ -205,6 +216,7 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 		count++;
 		if (count >= 5)
 			break;
+
 		if (!strcmp("B0", VarParam[varsubscript].RegType))
 		{
 			if (!write)
@@ -245,7 +257,7 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 			*buff_dest = ((int16_t)buff[0]) * VarParam[varsubscript].modules;
 		}
 	}
-	else if (datatype != double_type && datatype != float_type)
+	else
 	{
 		ByteChange(buff, regnums, regdian, byteorder);
 
@@ -265,21 +277,14 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 		{
 			*buff_dest = (int64_t)MODBUS_GET_INT64_FROM_INT16(buff, 0);
 		}
-	}
-	else if (datatype == float_type)
-	{
-		if (regdian && byteorder)
-			* buff_dest = (float)modbus_get_float_dcba(buff);
-		else if ((!regdian) && byteorder)
-			* buff_dest = modbus_get_float_abcd(buff);
-		else if (regdian && (!byteorder))
-			* buff_dest = modbus_get_float_cdab(buff);
-		else if ((!regdian) && (!byteorder))
-			* buff_dest = modbus_get_float_badc(buff);
-	}
-	else if (datatype == double_type)
-	{
-	//	cout << "double is " << static_cast<double>(MODBUS_GET_INT64_FROM_INT16(buff, 0));
+		else if (datatype == float_type)
+		{
+			*buff_dest = modbus_get_float_from_int16(buff);
+		}
+		else if (datatype == double_type)
+		{
+			*buff_dest = modbus_get_double_from_int16(buff);
+		}
 	}
 	modbus_close(mb);
 	modbus_free(mb);
