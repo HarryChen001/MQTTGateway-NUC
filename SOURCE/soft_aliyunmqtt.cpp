@@ -25,7 +25,7 @@ using std::endl;
 
 void MyAliyunMqtt::message_arrive(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg)
 {
-	MyAliyunMqtt* pointer = (MyAliyunMqtt*) pcontext;
+	MyAliyunMqtt* pointer = (MyAliyunMqtt*)pcontext;
 	iotx_mqtt_topic_info_t* topic_info = (iotx_mqtt_topic_info_pt)msg->msg;
 	switch (msg->event_type) {
 	case IOTX_MQTT_EVENT_PUBLISH_RECEIVED:
@@ -57,7 +57,7 @@ int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
 		return -1;
 	}
 
-	res = IOT_MQTT_Subscribe_Sync(pclient, subscribetopic, iotx_qos, message_arrive, this,1000);
+	res = IOT_MQTT_Subscribe_Sync(pclient, subscribetopic, iotx_qos, message_arrive, this, 1000);
 	if (res < 0) {
 		printf("subscribe failed\n");
 		return -1;
@@ -109,7 +109,7 @@ MyAliyunMqtt::~MyAliyunMqtt()
 {
 
 }
-int MyAliyunMqtt::MqttInit(char* host,int port,char* clientid,char* username,char* password)
+int MyAliyunMqtt::MqttInit(char* host, int port, char* clientid, char* username, char* password)
 {
 	iotx_mqtt_param_t       mqtt_params;
 
@@ -140,8 +140,8 @@ MyAliyunMqtt::MyAliyunMqtt()
 }
 int MyAliyunMqtt::MqttInterval(void* Params)
 {
-	MyAliyunMqtt *point = (MyAliyunMqtt*)Params;
-	while(1)
+	MyAliyunMqtt* point = (MyAliyunMqtt*)Params;
+	while (1)
 	{
 		IOT_MQTT_Yield((point->pclient), 200);
 	}
@@ -152,21 +152,21 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 	MyAliyunMqtt* point = (MyAliyunMqtt*)Params;
 	double buff;
 	Serial s;
-	while(1)
+	while (1)
 	{
-		if(point->getmessage == true)
+		if (point->getmessage == true)
 		{
-			cJSON* json,*json_params;
+			cJSON* json, * json_params;
 			json = cJSON_Parse(point->payload);
 
-			json_params = cJSON_GetObjectItem(json,"params");
-			if(json_params)
+			json_params = cJSON_GetObjectItem(json, "params");
+			if (json_params)
 			{
 				char* varname = json_params->child->string;
 				double value = json_params->child->valuedouble;
 				modbus_set(1, value, varname, &buff);
 			}
-			else if((json_params = cJSON_GetObjectItem(json,"COM")))
+			else if ((json_params = cJSON_GetObjectItem(json, "COM")))
 			{
 				int com = json_params->valueint;
 				char dev[100];
@@ -174,26 +174,26 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				char readbuff[1024];
 #ifndef gcc
 				char buff[100];
-				int gpio = PortInfo[getportinfosubscript(PortInfo,com)].gpio;
-				sprintf(buff,"%s%d%s","echo ",gpio," > /sys/class/gpio/export");
+				int gpio = PortInfo[getportinfosubscript(PortInfo, com)].gpio;
+				sprintf(buff, "%s%d%s", "echo ", gpio, " > /sys/class/gpio/export");
 				system(buff);
-				sprintf(buff,"%s%d%s","echo out > /sys/class/gpio/gpio",gpio,"/direction");
+				sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", gpio, "/direction");
 				system(buff);
-				sprintf(buff,"%s%d%s","echo 1 > /sys/class/gpio/gpio",gpio,"/value");
+				sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", gpio, "/value");
 				system(buff);
 #endif
 				cJSON* json_payload;
 
-				json_payload = cJSON_GetObjectItem(json,"payload");
-				int ComIsResp = cJSON_GetObjectItem(json,"ComIsResp")->valueint;
+				json_payload = cJSON_GetObjectItem(json, "payload");
+				int ComIsResp = cJSON_GetObjectItem(json, "ComIsResp")->valueint;
 				int serialtimeout = 0;
-				if(ComIsResp)
-					serialtimeout = cJSON_GetObjectItem(json,"ComTimeoutMs")->valueint;
-				sprintf(dev,"%s%d","/dev/ttyS",com);
+				if (ComIsResp)
+					serialtimeout = cJSON_GetObjectItem(json, "ComTimeoutMs")->valueint;
+				sprintf(dev, "%s%d", "/dev/ttyS", com);
 
-				int len = Base64decode(dest,json_payload->valuestring);
+				int len = Base64decode(dest, json_payload->valuestring);
 
-				s.open(dev,115200,8,'N',1);
+				s.open(dev, 115200, 8, 'N', 1);
 
 				s.write(dest, len);
 #ifndef gcc
@@ -205,8 +205,8 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				{
 					cout << "read serial timeout!" << endl;
 				}
-				memset(dest,0,sizeof(dest));
-				Base64encode(dest,readbuff,seriallen);
+				memset(dest, 0, sizeof(dest));
+				Base64encode(dest, readbuff, seriallen);
 				s.close();
 
 				cJSON* response;
@@ -217,23 +217,23 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				strftime(tmp, sizeof(tmp), "%Y%m%d%H%M%S", localtime(&nowtime));
 
 				response = cJSON_CreateObject();
-				cJSON_AddNumberToObject(response,"COM",com);
+				cJSON_AddNumberToObject(response, "COM", com);
 
-				if(!ComIsResp)
+				if (!ComIsResp)
 				{
-					sprintf(payload,"%s%d %s","Com",com,"Compelete");
+					sprintf(payload, "%s%d %s", "Com", com, "Compelete");
 				}
 				else
-					strcpy(payload,dest);
+					strcpy(payload, dest);
 
-				if(seriallen == 0)
+				if (seriallen == 0)
 				{
-					sprintf(payload,"%s%d %s","Com",com,"Timeout");
+					sprintf(payload, "%s%d %s", "Com", com, "Timeout");
 				}
 
-				cJSON_AddStringToObject(response,"Time",tmp);
-				cJSON_AddStringToObject(response,"payload",payload);
-				point->publish(ThemeCtrl[0].CtrlPub,1,cJSON_PrintUnformatted(response));
+				cJSON_AddStringToObject(response, "Time", tmp);
+				cJSON_AddStringToObject(response, "payload", payload);
+				point->publish(ThemeCtrl[0].CtrlPub, 1, cJSON_PrintUnformatted(response));
 				cJSON_Delete(response);
 			}
 			else
@@ -254,12 +254,12 @@ int MyAliyunMqtt::openmainthread()
 }
 int MyAliyunMqtt::openintervalthread()
 {
-	threadid_interval = std::thread(MqttInterval,this);
+	threadid_interval = std::thread(MqttInterval, this);
 	return 0;
 }
 int MyAliyunMqtt::openrecparsethread()
 {
-	threadid_recparse = std::thread(MqttRecParse,this);
+	threadid_recparse = std::thread(MqttRecParse, this);
 	return 0;
 }
 int MyAliyunMqtt::MqttMain(void* Params)
@@ -268,11 +268,11 @@ int MyAliyunMqtt::MqttMain(void* Params)
 	for (int i = 0; i < PortInfo[0].portcount; i++)
 	{
 		char buff[100];
-		sprintf(buff,"%s%d%s","echo ",PortInfo[i].gpio," > /sys/class/gpio/export");
+		sprintf(buff, "%s%d%s", "echo ", PortInfo[i].gpio, " > /sys/class/gpio/export");
 		system(buff);
-		sprintf(buff,"%s%d%s","echo out > /sys/class/gpio/gpio",PortInfo[i].gpio,"/direction");
+		sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", PortInfo[i].gpio, "/direction");
 		system(buff);
-		sprintf(buff,"%s%d%s","echo 1 > /sys/class/gpio/gpio",PortInfo[i].gpio,"/value");
+		sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", PortInfo[i].gpio, "/value");
 		system(buff);
 	}
 #endif
@@ -296,20 +296,20 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		char tmp[64];
 		strftime(tmp, sizeof(tmp), "%Y%m%d%H%M%S", localtime(&nowtime));
 
-		cJSON* publish_json,* params_json;
+		cJSON* publish_json, * params_json;
 
 		publish_json = cJSON_CreateObject();
 
-		cJSON_AddStringToObject(publish_json,"id",tmp);
-		cJSON_AddStringToObject(publish_json,"method","method.event.property.post");
-		cJSON_AddItemToObject(publish_json,"params",params_json = cJSON_CreateObject());
+		cJSON_AddStringToObject(publish_json, "id", tmp);
+		cJSON_AddStringToObject(publish_json, "method", "method.event.property.post");
+		cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
 
 		double temp;
 		for (int i = 0; i < ThemeUploadList[0].UploadCount; i++)
 		{
 			cout << ThemeUploadList[i].VarName << endl;
-			modbus_set(0,0,ThemeUploadList[i].VarName, &temp);
-			cJSON_AddNumberToObject(params_json,ThemeUploadList[i].VarName,temp);
+			modbus_set(0, 0, ThemeUploadList[i].VarName, &temp);
+			cJSON_AddNumberToObject(params_json, ThemeUploadList[i].VarName, temp);
 		}
 		char* payload = cJSON_PrintUnformatted(publish_json);
 		point->publish(ThemeUpload[0].CtrlPub, ThemeUpload[0].PubPeriod, payload);
