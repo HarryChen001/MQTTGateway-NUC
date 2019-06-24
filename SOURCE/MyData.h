@@ -1,8 +1,14 @@
 #pragma once
 #ifndef _MY_DATA_H_
 #define _MY_DADA_H_
-enum enumdatatype{
-	uint16,uint32,uint64,int16,int32,int64,float_type,double_type
+
+#include <stdint.h>
+
+enum enumdatatype {
+	uint16, uint32, uint64, int16, int32, int64, float_type, double_type, data_no_type
+};
+enum enumregtype {
+	B0, B1, W3, W4, reg_no_type
 };
 //�豸��������Ϣ
 typedef struct _DeviceInfo_t {
@@ -110,8 +116,20 @@ typedef struct _ConnectInfo_t {
 	char MqttName[100];
 
 	int MqttCount;
-	
+
 }ConnectInfo_t;
+
+union doubleunion
+{
+	int64_t int64type;
+	double doubletype;
+};
+union floatunion
+{
+	int32_t int32type;
+	float floattype;
+};
+
 
 extern ConnectInfo_t MqttInfo[4];
 extern DeviceInfo_t DevInfo[10];
