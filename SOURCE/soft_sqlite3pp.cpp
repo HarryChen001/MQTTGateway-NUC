@@ -102,7 +102,7 @@ int MySqlite::GetAllInfo()
 		PortInfo[j].id = (*i).get<int>(0);
 		PortInfo[j].PortId = (*i).get<int>(2);
 		PortInfo[j].PortType = (*i).get<int>(3);
-		PortInfo[j].PortNum = (*i).get<int>(4) + 1;
+		PortInfo[j].PortNum = (*i).get<int>(4);
 		if(PortInfo[j].PortNum == 10)
 		{
 			PortInfo[j].gpio = 0x2e;
