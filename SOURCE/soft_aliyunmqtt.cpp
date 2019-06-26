@@ -302,6 +302,8 @@ int MyAliyunMqtt::MqttMain(void* Params)
 	point->openrecparsethread();		//create thread----parse the receive data
 	while (1)
 	{
+		if(!ThemeUploadList[0].UploadCount)
+			continue;
 		time_t nowtime;
 		nowtime = time(NULL); //get now time
 		char tmp[64];
@@ -324,7 +326,7 @@ int MyAliyunMqtt::MqttMain(void* Params)
 			cJSON_AddNumberToObject(params_json, ThemeUploadList[i].VarName, temp);
 		}
 		char* payload = cJSON_PrintUnformatted(publish_json);
-		point->publish(ThemeUpload[0].CtrlPub, ThemeUpload[0].PubPeriod, payload);
+		point->publish(ThemeUpload[0].CtrlPub, ThemeUpload[0].QosPub, payload);
 
 		sleep(ThemeUpload[0].PubPeriod);
 
