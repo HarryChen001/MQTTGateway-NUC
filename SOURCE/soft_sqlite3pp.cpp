@@ -103,20 +103,65 @@ int MySqlite::GetAllInfo()
 		PortInfo[j].PortId = (*i).get<int>(2);
 		PortInfo[j].PortType = (*i).get<int>(3);
 		PortInfo[j].PortNum = (*i).get<int>(4);
-		if(PortInfo[j].PortNum == 10)
+		switch(PortInfo[j].PortNum)
 		{
+		case 1:
+			PortInfo[j].PortNum = 10;
 			PortInfo[j].gpio = 0x2e;
+			break;
+		case 2:
+			PortInfo[j].PortNum = 3;
+			PortInfo[j].gpio = 0x67;
+			break;
+		case 3:
+			PortInfo[j].PortNum = 9;
+			PortInfo[j].gpio = 0x66;
+			break;
+		case 4:
+			PortInfo[j].PortNum = 1;
+			PortInfo[j].gpio = 0x84;
+			break;
+		case 5:
+			PortInfo[j].PortNum = 6;
+			PortInfo[j].gpio = 0x21;
+			break;
+		case 6:
+			PortInfo[j].PortNum = 7;
+			PortInfo[j].gpio = -1;
+			break;
+		case 7:
+			PortInfo[j].PortNum = 2;
+			PortInfo[j].gpio = -1;
+			break;
+		case 8:
+			PortInfo[j].gpio = -1;
+			break;
+		case 9:
+			PortInfo[j].PortNum = 4;
+			PortInfo[j].gpio = -1;
+			break;
+		}
+/*		if(PortInfo[j].PortNum == 10)
+		{
 		}
 		else if(PortInfo[j].PortNum == 9)
-				PortInfo[j].gpio = 0x66;
+		{
+			PortInfo[j].gpio = 0x66;
+		}
 		else if(PortInfo[j].PortNum == 6)
-				PortInfo[j].gpio = 0x21;
+		{
+			PortInfo[j].gpio = 0x21;
+		}
 		else if(PortInfo[j].PortNum == 3)
-				PortInfo[j].gpio = 0x67;
+		{
+			PortInfo[j].gpio = 0x67;
+		}
 		else if(PortInfo[j].PortNum == 1)
-				PortInfo[j].gpio = 0x84;
+		{
+			PortInfo[j].gpio = 0x84;
+		}
 		else
-			PortInfo[j].gpio = -1;
+			PortInfo[j].gpio = -1;*/
 		PortInfo[j].baud = (*i).get<int>(5);
 		PortInfo[j].DataBits = (*i).get<int>(7);
 		PortInfo[j].StopBits = (*i).get<int>(8);
