@@ -173,14 +173,17 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				char dest[1024];
 				char readbuff[1024];
 #ifndef gcc
-				char buff[100];
 				int gpio = PortInfo[getportinfosubscript(PortInfo, com)].gpio;
-				sprintf(buff, "%s%d%s", "echo ", gpio, " > /sys/class/gpio/export");
-				system(buff);
-				sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", gpio, "/direction");
-				system(buff);
-				sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", gpio, "/value");
-				system(buff);
+				if(gpio != -1)
+				{
+					char buff[100];
+					sprintf(buff, "%s%d%s", "echo ", gpio, " > /sys/class/gpio/export");
+					system(buff);
+					sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", gpio, "/direction");
+					system(buff);
+					sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", gpio, "/value");
+					system(buff);
+				}
 #endif
 				cJSON* json_payload;
 
@@ -197,8 +200,12 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 
 				s.write(dest, len);
 #ifndef gcc
-				sprintf(buff, "%s%d%s", "echo 0 > /sys/class/gpio/gpio", gpio, "/value");
-				system(buff);
+				if(gpio != -1)
+				{
+					char buff[100];
+					sprintf(buff, "%s%d%s", "echo 0 > /sys/class/gpio/gpio", gpio, "/value");
+					system(buff);
+				}
 #endif
 				int seriallen = s.read_wait(readbuff, 1024, serialtimeout);
 				if (seriallen == 0)
@@ -267,13 +274,17 @@ int MyAliyunMqtt::MqttMain(void* Params)
 #ifndef gcc
 	for (int i = 0; i < PortInfo[0].portcount; i++)
 	{
-		char buff[100];
-		sprintf(buff, "%s%d%s", "echo ", PortInfo[i].gpio, " > /sys/class/gpio/export");
-		system(buff);
-		sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", PortInfo[i].gpio, "/direction");
-		system(buff);
-		sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", PortInfo[i].gpio, "/value");
-		system(buff);
+		int gpio = PortInfo[i].gpio;
+		if(gpio != -1)
+		{
+			char buff[100];
+			sprintf(buff, "%s%d%s", "echo ", PortInfo[i].gpio, " > /sys/class/gpio/export");
+			system(buff);
+			sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", PortInfo[i].gpio, "/direction");
+			system(buff);
+			sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", PortInfo[i].gpio, "/value");
+			system(buff);
+		}
 	}
 #endif
 	MyAliyunMqtt* point = (MyAliyunMqtt*)Params;
@@ -307,6 +318,7 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		double temp;
 		for (int i = 0; i < ThemeUploadList[0].UploadCount; i++)
 		{
+			cout << "var name is :"  << endl;
 			cout << ThemeUploadList[i].VarName << endl;
 			modbus_set(0, 0, ThemeUploadList[i].VarName, &temp);
 			cJSON_AddNumberToObject(params_json, ThemeUploadList[i].VarName, temp);

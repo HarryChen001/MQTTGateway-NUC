@@ -119,12 +119,12 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 	modbus_set_slave(mb, DevInfo[devsubscript].address);
 #ifndef gcc
 	int ret = -1;
-	while (ret == -1)
+	while (ret == -1 && PortInfo[portsubscript].gpio != -1)
 	{
 		ret = modbus_rtu_set_rts(mb, MODBUS_RTU_RTS_UP);
 	}
 	ret = -1;
-	while (ret == -1)
+	while (ret == -1 && PortInfo[portsubscript].gpio != -1)
 	{
 		ret = modbus_rtu_set_custom_rts(mb, setrts);
 	}
