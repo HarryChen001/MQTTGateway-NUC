@@ -107,12 +107,13 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 	sprintf(serialport, "%s%d", "/dev/ttyS", PortInfo[portsubscript].PortNum);
 
 	char parity = PortInfo[portsubscript].Parity[0];
-	mb = modbus_new_rtu(serialport, PortInfo[portsubscript].baud, parity, 8 - PortInfo[portsubscript].DataBits, 1 - PortInfo[portsubscript].StopBits);
+	mb = modbus_new_rtu(serialport, PortInfo[portsubscript].baud, parity, PortInfo[portsubscript].DataBits, PortInfo[portsubscript].StopBits);
 	if (mb == NULL)
 	{
 		printf("Unable to create the libmodbus context\n");
 		return -1;
 	}
+//#define modbus_debug
 #ifdef modbus_debug
 	modbus_set_debug(mb, 1);
 #endif
