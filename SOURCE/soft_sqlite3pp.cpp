@@ -19,7 +19,7 @@ MySqlite::MySqlite(char* dbname)
 }
 MySqlite::~MySqlite()
 {
-
+	db.disconnect();
 }
 int MySqlite::selectfrom(char* tablename,char* format,...)
 {

@@ -157,6 +157,7 @@ int main(int argc, char* argv[])
 #endif
 	MySqlite db(argv[1]);
 	db.GetAllInfo();
+	db.~MySqlite();
 
 	MyAliyunMqtt Mqtt;
 	Mqtt.openmainthread();

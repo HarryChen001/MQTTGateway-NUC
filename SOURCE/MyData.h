@@ -130,7 +130,6 @@ union floatunion
 	float floattype;
 };
 
-
 extern ConnectInfo_t MqttInfo[4];
 extern DeviceInfo_t DevInfo[10];
 extern PortInfo_t PortInfo[10];
