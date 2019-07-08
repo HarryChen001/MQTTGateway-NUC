@@ -95,7 +95,7 @@ int MyAliyunMqtt::publish(char* publishtopic, int Qos, cJSON* json_payload)
 }
 void MyAliyunMqtt::event_handle(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg)
 {
-//	printf("msg->event_type : %d\n", msg->event_type);
+	printf("msg->event_type : %d\n", msg->event_type);
 }
 
 /*
@@ -179,7 +179,7 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				char readbuff[1024];
 #ifndef gcc
 				int gpio = PortInfo[getportinfosubscript(PortInfo, com)].gpio;
-				if(gpio != -1)
+				if (gpio != -1)
 				{
 					char buff[100];
 					sprintf(buff, "%s%d%s", "echo ", gpio, " > /sys/class/gpio/export");
@@ -205,7 +205,7 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 
 				s.write(dest, len);
 #ifndef gcc
-				if(gpio != -1)
+				if (gpio != -1)
 				{
 					char buff[100];
 					sprintf(buff, "%s%d%s", "echo 0 > /sys/class/gpio/gpio", gpio, "/value");
@@ -280,7 +280,7 @@ int MyAliyunMqtt::MqttMain(void* Params)
 	for (int i = 0; i < PortInfo[0].portcount; i++)
 	{
 		int gpio = PortInfo[i].gpio;
-		if(gpio != -1)
+		if (gpio != -1)
 		{
 			char buff[100];
 			sprintf(buff, "%s%d%s", "echo ", PortInfo[i].gpio, " > /sys/class/gpio/export");
@@ -306,7 +306,7 @@ int MyAliyunMqtt::MqttMain(void* Params)
 	static int i = 0;
 	while (1)
 	{
-		if(!ThemeUploadList[0].UploadCount)
+		if (!ThemeUploadList[0].UploadCount)
 			continue;
 		time_t nowtime;
 		nowtime = time(NULL); //get now time
@@ -340,5 +340,6 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		point->publish(ThemeUpload[0].CtrlPub, ThemeUpload[0].QosPub, publish_json);
 		if(!i)
 			sleep(ThemeUpload[0].PubPeriod);
+
 	}
 }

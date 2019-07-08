@@ -34,7 +34,7 @@ void setrts(modbus_t* ctx, int on)
 	}
 }
 
-void ByteChange(uint16_t* buff,int nums,int endian,int byteorder)
+void ByteChange(uint16_t* buff, int nums, int endian, int byteorder)
 {
 	if (!endian)
 	{
@@ -109,7 +109,7 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 		if (VarParam[varsubscript].DevId == DevInfo[i].id)
 			devsubscript = i;
 	}
-	sprintf(serialport, "%s%d", "/dev/ttyS", PortInfo[portsubscript].PortNum);
+	sprintf(serialport, "%s%d", "/dev/ttyS", PortInfo[portsubscript].PortNum -10 );
 
 	char parity = PortInfo[portsubscript].Parity[0];
 	mb = modbus_new_rtu(serialport, PortInfo[portsubscript].baud, parity, PortInfo[portsubscript].DataBits, PortInfo[portsubscript].StopBits);
@@ -118,6 +118,7 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 		printf("Unable to create the libmodbus context\n");
 		return -1;
 	}
+
 //#define modbus_debug
 #ifdef modbus_debug
 	modbus_set_debug(mb, 1);
@@ -155,9 +156,9 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 	int regdian = DevInfo[devsubscript].regedian;
 	int byteorder = DevInfo[devsubscript].byteorder;
 
-//	regdian = 1;
-//	byteorder = 1;
-	//	strcpy(VarParam[varsubscript].DataType, "int32");
+	//	regdian = 1;
+	//	byteorder = 1;
+		//	strcpy(VarParam[varsubscript].DataType, "int32");
 	if (write)
 	{
 		cout << "inputdata is " << inputdata << endl;
@@ -214,7 +215,7 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 		floattype.floattype = inputdata;
 		modbus_set_float_to_int16(write_buff, floattype.floattype);
 	}
-	if(datatype != int16 && datatype != uint16 )
+	if (datatype != int16 && datatype != uint16)
 		ByteChange(write_buff, regnums, regdian, byteorder);
 
 	while (res == -1)
@@ -296,7 +297,6 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 	modbus_free(mb);
 	return 0;
 }
-
 modbus::modbus()
 {
 
@@ -318,10 +318,7 @@ int modbus::modbus_rtu_init()
 		int stopbits = Allinfo[i].portinfo.StopBits;
 		char parity = Allinfo[i].portinfo.Parity[0];
 		string serial;
-		/*if (portnums == 10)
-			portnums = 0;
-		if (portnums == 3)
-			portnums = 1;*/
+
 		sprintf((char*)serial.c_str(), "%s%d", "/dev/ttyS", portnums);
 
 		Allinfo[i].fdmodbus = modbus_new_rtu(serial.c_str(), baud, parity, databits, stopbits);
@@ -460,6 +457,7 @@ void* modbus::modbus_read_thread(void* params)
 				}
 			}
 		}
+		sleep(1);
 	}
 }
 int modbus::openmainthread()

@@ -2,8 +2,8 @@
 #ifndef _MY_DATA_H_
 #define _MY_DADA_H_
 
-#include <string>
 #include <stdint.h>
+#include <string>
 #include <queue>
 #include <map>
 

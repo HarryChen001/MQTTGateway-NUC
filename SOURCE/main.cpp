@@ -51,60 +51,60 @@ std::map<std::string, double>var;
 int main(int argc, char* argv[])
 {
 #ifdef BASE64_ENCODE_TEST
-	if(!strcmp("base64encode",argv[1]))
-		while(1)
+	if (!strcmp("base64encode", argv[1]))
+		while (1)
 		{
 			char buff[1024];
-			cin.getline(buff,1024);
+			cin.getline(buff, 1024);
 			int base64data_length = strlen(buff);
 			int encoded_data_length = Base64encode_len(base64data_length);
 			char* base64_string = (char*)malloc(encoded_data_length);
-			Base64encode(base64_string,buff,base64data_length);
+			Base64encode(base64_string, buff, base64data_length);
 			cout << base64_string << endl;
 			free(base64_string);
 		}
 #endif
 #ifdef BASE64_DECODE_TEST
-	if(!strcmp("base64decode",argv[1]))
-		while(1)
+	if (!strcmp("base64decode", argv[1]))
+		while (1)
 		{
 			char buff[1024];
 			char deststring[1024];
-			cin.getline(buff,1024);
-			Base64decode(deststring,buff);
+			cin.getline(buff, 1024);
+			Base64decode(deststring, buff);
 			cout << deststring << endl;
 		}
 #endif
 #ifdef BASE64_DECODE_TEST
-	if(!strcmp("base64decodenums",argv[1]))
-		while(1)
+	if (!strcmp("base64decodenums", argv[1]))
+		while (1)
 		{
 			char buff[1024];
 			char deststring[1024];
-			cin.getline(buff,1024);
-			Base64decode(deststring,buff);
-			for(int i = 0;i < 7;i++)
+			cin.getline(buff, 1024);
+			Base64decode(deststring, buff);
+			for (int i = 0; i < 7; i++)
 			{
-				printf("%d",deststring[i]);
+				printf("%d", deststring[i]);
 			}
 		}
 #endif
 #ifdef BASE64_ENCODE_NUM_TEST
-	if(!strcmp("base64encodenums",argv[1]))
+	if (!strcmp("base64encodenums", argv[1]))
 	{
-		while(1)
+		while (1)
 		{
 			int nums[1024];
 			char buff[1024];
-			for(int i = 0;i < 8;i++)
+			for (int i = 0; i < 8; i++)
 			{
 				cin >> nums[i];
 				buff[i] = nums[i];
 			}
-			int base64data_length = 8*sizeof(char);
+			int base64data_length = 8 * sizeof(char);
 			int encoded_data_length = Base64encode_len(base64data_length);
 			char* base64_string = (char*)malloc(encoded_data_length);
-			Base64encode(base64_string,buff,base64data_length);
+			Base64encode(base64_string, buff, base64data_length);
 			cout << base64_string << endl;
 			free(base64_string);
 		}
@@ -113,28 +113,28 @@ int main(int argc, char* argv[])
 
 #ifdef modbus_tcp
 	modbus_t* mb;
-	mb = modbus_new_tcp("192.168.1.23",1502);
-	modbus_set_slave(mb,1);
-	modbus_set_debug(mb,1);
+	mb = modbus_new_tcp("192.168.1.23", 1502);
+	modbus_set_slave(mb, 1);
+	modbus_set_debug(mb, 1);
 
-	while(modbus_connect(mb) != 0);
+	while (modbus_connect(mb) != 0);
 
-	while(1)
+	while (1)
 	{
 		uint16_t buff[100];
 		int count = 0;
 		int rc = -1;
-		while(rc < 0)
+		while (rc < 0)
 		{
-			rc = modbus_read_registers(mb,0,20,buff);
+			rc = modbus_read_registers(mb, 0, 20, buff);
 			count++;
-			if(count >= 6)
+			if (count >= 6)
 			{
 				break;
 			}
-		//	sleep(1);
+			//	sleep(1);
 		}
-		for(int i = 0 ; i < rc; i++)
+		for (int i = 0; i < rc; i++)
 		{
 			cout << buff[i] << endl;
 		}
@@ -144,20 +144,20 @@ int main(int argc, char* argv[])
 #endif
 
 #ifdef SERIAL_TEST
-	if(!strcmp("serialdebug",argv[1]))
+	if (!strcmp("serialdebug", argv[1]))
 	{
 		Serial s;
-		if (s.open(argv[2], 115200, 8,'N', 1) != Serial::OK)
+		if (s.open(argv[2], 115200, 8, 'N', 1) != Serial::OK)
 		{
 			printf("Cannot open serial port!\n");
 			return -1;
 		}
 		s.openreadthread();
 		char buff[1024];
-		while(1)
+		while (1)
 		{
-			cin.getline(buff,1024);
-			strcat(buff,"\r\n");
+			cin.getline(buff, 1024);
+			strcat(buff, "\r\n");
 			s.write(buff, strlen(buff));
 		}
 	}
@@ -168,6 +168,7 @@ int main(int argc, char* argv[])
 
 	modbus newmodbus;
 	newmodbus.openmainthread();
+
 
 	MyAliyunMqtt Mqtt;
 	Mqtt.openmainthread();
