@@ -141,10 +141,10 @@ typedef struct _var_t
 extern ConnectInfo_t MqttInfo[1];
 extern DeviceInfo_t DevInfo[30];
 extern PortInfo_t PortInfo[10];
-extern ThemeCtrl_t ThemeCtrl[10];
-extern ThemeUpload_t ThemeUpload[10];
-extern ThemeUploadList_t ThemeUploadList[100];
-extern VarParam_t VarParam[100];
+extern ThemeCtrl_t ThemeCtrl[1];
+extern ThemeUpload_t ThemeUpload[1];
+extern ThemeUploadList_t ThemeUploadList[2000];
+extern VarParam_t VarParam[2000];
 extern enumdatatype datatype;
-
+extern var_t varinfo[100];
 #endif // !_MY_DATA_H_
