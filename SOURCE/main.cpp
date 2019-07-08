@@ -27,14 +27,15 @@ using std::cout;
 using std::endl;
 using std::string;
 
-ConnectInfo_t MqttInfo[4];
-DeviceInfo_t DevInfo[10];
+ConnectInfo_t MqttInfo[1];
+DeviceInfo_t DevInfo[30];
 PortInfo_t PortInfo[10];
-ThemeCtrl_t ThemeCtrl[10];
-ThemeUpload_t ThemeUpload[10];
-ThemeUploadList_t ThemeUploadList[100];
-VarParam_t VarParam[100];
+ThemeCtrl_t ThemeCtrl[1];
+ThemeUpload_t ThemeUpload[1];
+ThemeUploadList_t ThemeUploadList[2000];
+VarParam_t VarParam[2000];
 enumdatatype datatype;
+var_t varinfo[100];
 
 #define BASE64_ENCODE_TEST
 #define BASE64_DECODE_TEST

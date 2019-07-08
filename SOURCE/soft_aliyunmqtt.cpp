@@ -317,15 +317,18 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		cJSON_AddStringToObject(publish_json, "method", "method.event.property.post");
 		cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
 
+
+
 		double temp;
 		for (int i = 0; i < ThemeUploadList[0].UploadCount; i++)
 		{
-			cout << "var name is :"  << endl;
+		//	cout << "var name is :"  << endl;
 			cout << ThemeUploadList[i].VarName << endl;
 			modbus_set(0, 0, ThemeUploadList[i].VarName, &temp);
 			cJSON_AddNumberToObject(params_json, ThemeUploadList[i].VarName, temp);
 		}
 		char* payload = cJSON_PrintUnformatted(publish_json);
+		cout << payload << endl;
 		point->publish(ThemeUpload[0].CtrlPub, ThemeUpload[0].QosPub, payload);
 
 		sleep(ThemeUpload[0].PubPeriod);

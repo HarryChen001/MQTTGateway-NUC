@@ -2,6 +2,7 @@
 #ifndef _MY_DATA_H_
 #define _MY_DADA_H_
 
+#include <string>
 #include <stdint.h>
 
 enum enumdatatype {
@@ -130,8 +131,15 @@ union floatunion
 	float floattype;
 };
 
-extern ConnectInfo_t MqttInfo[4];
-extern DeviceInfo_t DevInfo[10];
+typedef struct _var_t
+{
+	std::string varname;
+	double value;
+	int count;
+}var_t;
+
+extern ConnectInfo_t MqttInfo[1];
+extern DeviceInfo_t DevInfo[30];
 extern PortInfo_t PortInfo[10];
 extern ThemeCtrl_t ThemeCtrl[10];
 extern ThemeUpload_t ThemeUpload[10];
