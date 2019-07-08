@@ -323,6 +323,12 @@ int modbus::modbus_rtu_init()
 
 		Allinfo[i].fdmodbus = modbus_new_rtu(serial.c_str(), baud, parity, databits, stopbits);
 //		modbus_set_debug(Allinfo[i].fdmodbus, 1);
+#ifdef gcc
+		if (portnums == 10)
+			portnums = 0;
+		if (portnums == 3)
+			portnums = 1;
+#endif
 #ifndef gcc
 		int ret = -1;
 		while (ret == -1 && Allinfo[i].portinfo.gpio != -1)
