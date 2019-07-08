@@ -4,6 +4,36 @@
 
 #include <string>
 #include <stdint.h>
+#include <queue>
+#include <map>
+
+#include "soft_mymodbus.h"
+
+#define MqttConnect 1
+#define SerialNums 10
+#define DeviceNums 10
+#define ThemeCtrlNums 1
+#define ThemeUploadNums 1
+#define VarNums 500
+#define UploadVarNums 500
+
+#define RESET   "\033[0m"
+#define BLACK   "\033[30m"      /* Black */
+#define RED     "\033[31m"      /* Red */
+#define GREEN   "\033[32m"      /* Green */
+#define YELLOW  "\033[33m"      /* Yellow */
+#define BLUE    "\033[34m"      /* Blue */
+#define MAGENTA "\033[35m"      /* Magenta */
+#define CYAN    "\033[36m"      /* Cyan */
+#define WHITE   "\033[37m"      /* White */
+#define BOLDBLACK   "\033[1m\033[30m"      /* Bold Black */
+#define BOLDRED     "\033[1m\033[31m"      /* Bold Red */
+#define BOLDGREEN   "\033[1m\033[32m"      /* Bold Green */
+#define BOLDYELLOW  "\033[1m\033[33m"      /* Bold Yellow */
+#define BOLDBLUE    "\033[1m\033[34m"      /* Bold Blue */
+#define BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
+#define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
+#define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
 enum enumdatatype {
 	uint16, uint32, uint64, int16, int32, int64, float_type, double_type, data_no_type
@@ -11,17 +41,6 @@ enum enumdatatype {
 enum enumregtype {
 	B0, B1, W3, W4, reg_no_type
 };
-//�豸��������Ϣ
-typedef struct _DeviceInfo_t {
-	int id;					//devinfo id
-	int PortId;				//�󶨵�PortId
-	int address;				//�豸��ַ
-	int regedian;			//�豸��С��
-	int byteorder;			//�豸�Ĵ����ߵ�λ
-	char DeviceName[100];	//�豸��
-
-	int devcount;
-}DeviceInfo_t;
 
 //�˿ڵĲ�������
 typedef struct _PortInfo_t {
@@ -94,6 +113,19 @@ typedef struct _VarParam_t {
 
 	int VarCount;		//����������
 }VarParam_t;
+//�豸��������Ϣ
+typedef struct _DeviceInfo_t {
+	int id;					//devinfo id
+	int PortId;				//�󶨵�PortId
+	int address;				//�豸��ַ
+	int regedian;			//�豸��С��
+	int byteorder;			//�豸�Ĵ����ߵ�λ
+	char DeviceName[100];	//�豸��
+
+	int devcount;
+	VarParam_t varparam[100];
+	int varcount;
+}DeviceInfo_t;
 
 typedef struct _ConnectInfo_t {
 	int id;
@@ -119,7 +151,15 @@ typedef struct _ConnectInfo_t {
 	int MqttCount;
 
 }ConnectInfo_t;
+typedef struct _Allinfo_t {
 
+	modbus_t* fdmodbus;
+	PortInfo_t portinfo;
+
+	DeviceInfo_t deviceinfo[10];
+	int devcount;
+	int varcount;
+}Allinfo_t;
 union doubleunion
 {
 	int64_t int64type;
@@ -130,21 +170,20 @@ union floatunion
 	int32_t int32type;
 	float floattype;
 };
-
-typedef struct _var_t
-{
+typedef struct _Varinfo_t {
 	std::string varname;
 	double value;
-	int count;
-}var_t;
-
+}Varinfo_t;
 extern ConnectInfo_t MqttInfo[1];
-extern DeviceInfo_t DevInfo[30];
+extern DeviceInfo_t DevInfo[10];
 extern PortInfo_t PortInfo[10];
 extern ThemeCtrl_t ThemeCtrl[1];
 extern ThemeUpload_t ThemeUpload[1];
-extern ThemeUploadList_t ThemeUploadList[2000];
-extern VarParam_t VarParam[2000];
+extern ThemeUploadList_t ThemeUploadList[200];
+extern VarParam_t VarParam[200];
+
 extern enumdatatype datatype;
-extern var_t varinfo[100];
+extern Allinfo_t Allinfo[15];
+extern std::map<std::string, double>var;
+
 #endif // !_MY_DATA_H_

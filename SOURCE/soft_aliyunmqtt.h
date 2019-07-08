@@ -4,6 +4,7 @@
 
 #include "mqtt_api.h"
 #include "thread"
+#include "cJSON/cJSON.h"
 class MyAliyunMqtt{
 public:
 	MyAliyunMqtt();
@@ -16,7 +17,7 @@ public:
 	handle�����,pClient
 	*/
 	int subscribe(char* subscribetopic, int Qos);
-	int publish(char* publishtopic, int Qos,char* payload);
+	int publish(char* publishtopic, int Qos,cJSON* payload);
 	int openmainthread();
 	int openintervalthread();
 	int openrecparsethread();

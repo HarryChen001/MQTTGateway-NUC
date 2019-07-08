@@ -12,12 +12,7 @@
 #include "soft_mymodbus.h"
 #include "libserial/Serial.h"
 #include "base64/base64.h"
-//#include "rapidjson/document.h"
-//#include "rapidjson/stringbuffer.h"
-//#include "rapidjson/writer.h"
-
 #include "cJSON/cJSON.h"
-
 #include "soft_myfunction.h"
 
 using std::cout;
@@ -56,11 +51,12 @@ int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
 		printf("Unsupport Qos Setting!\n");
 		return -1;
 	}
+	printf("subscribe topic is %s\n", subscribetopic);
 
 	res = IOT_MQTT_Subscribe_Sync(pclient, subscribetopic, iotx_qos, message_arrive, this, 1000);
 	if (res < 0) {
 		printf("subscribe failed\n");
-		return -1;
+		exit(0);
 	}
 	else
 	{
@@ -69,28 +65,37 @@ int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
 	return 0;
 }
 
-int MyAliyunMqtt::publish(char* publishtopic, int Qos, char* payload)
+int MyAliyunMqtt::publish(char* publishtopic, int Qos, cJSON* json_payload)
 {
-	int res = 0;
+	int res = -1;
+	char* payload = cJSON_Print(json_payload);
 	iotx_mqtt_topic_info_t topic_msg;
-
+	char* publish_payload = (char*)malloc(strlen(cJSON_PrintUnformatted(json_payload)) + 1);
 	topic_msg.qos = Qos;
 	topic_msg.retain = 0;
 	topic_msg.dup = 0;
-	topic_msg.payload = (char*)payload;
+	topic_msg.payload = publish_payload;
 	topic_msg.payload_len = strlen(payload);
 
 	res = IOT_MQTT_Publish(pclient, publishtopic, &topic_msg);
-	if (res < 0) {
-		printf("publish failed\n");
+
+	cout << BOLDGREEN << "Publish to topic : " << publishtopic << endl;
+
+	if (res < 0)
+	{
+		cout << BOLDRED << "FAILED!" << endl;
+		cout << BOLDYELLOW << "Paylod is :\n " << BOLDRED << payload << RESET << endl;
+		free(publish_payload);
 		return -1;
 	}
-	cout << "publish success,payload is : " << payload << endl;
+	cout << BOLDYELLOW << "success!" << endl;
+	cout << BOLDGREEN << "Paylod is -> " << payload << RESET << endl;
+	free(publish_payload);
 	return 0;
 }
 void MyAliyunMqtt::event_handle(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg)
 {
-	printf("msg->event_type : %d\n", msg->event_type);
+//	printf("msg->event_type : %d\n", msg->event_type);
 }
 
 /*
@@ -240,7 +245,7 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 
 				cJSON_AddStringToObject(response, "Time", tmp);
 				cJSON_AddStringToObject(response, "payload", payload);
-				point->publish(ThemeCtrl[0].CtrlPub, 1, cJSON_PrintUnformatted(response));
+				point->publish(ThemeCtrl[0].CtrlPub, 1, (response));
 				cJSON_Delete(response);
 			}
 			else
@@ -289,8 +294,6 @@ int MyAliyunMqtt::MqttMain(void* Params)
 #endif
 	MyAliyunMqtt* point = (MyAliyunMqtt*)Params;
 
-	int loop_cnt = 0;
-
 	point->MqttInit(MqttInfo[0].ServerLink, MqttInfo[0].ServerPort, MqttInfo[0].ClientId, MqttInfo[0].UserName, MqttInfo[0].Password);
 	int res = point->subscribe(ThemeCtrl[0].CtrlSub, 1);
 	if (res < 0) {
@@ -300,6 +303,7 @@ int MyAliyunMqtt::MqttMain(void* Params)
 
 	point->openintervalthread();		//create MQTT interval thread
 	point->openrecparsethread();		//create thread----parse the receive data
+	static int i = 0;
 	while (1)
 	{
 		if(!ThemeUploadList[0].UploadCount)
@@ -316,23 +320,25 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		cJSON_AddStringToObject(publish_json, "id", tmp);
 		cJSON_AddStringToObject(publish_json, "method", "method.event.property.post");
 		cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
-
-
-
-		double temp;
-		for (int i = 0; i < ThemeUploadList[0].UploadCount; i++)
+		cout << BOLDMAGENTA << i << endl;
+		for (i; i < ThemeUploadList[0].UploadCount; i++)
 		{
-		//	cout << "var name is :"  << endl;
-			cout << ThemeUploadList[i].VarName << endl;
-			modbus_set(0, 0, ThemeUploadList[i].VarName, &temp);
-			cJSON_AddNumberToObject(params_json, ThemeUploadList[i].VarName, temp);
+			std::string varname =  ThemeUploadList[i].VarName;
+			double value = var[ThemeUploadList[i].VarName];
+			cJSON_AddNumberToObject(params_json, varname.c_str(), value);
+			if (!(i % 50) && i != 0)
+			{
+				i++;
+				break;
+			}
+		}
+		if (i >= ThemeUploadList[0].UploadCount)
+		{
+			i = 0;
 		}
 		char* payload = cJSON_PrintUnformatted(publish_json);
-		cout << payload << endl;
-		point->publish(ThemeUpload[0].CtrlPub, ThemeUpload[0].QosPub, payload);
-
-		sleep(ThemeUpload[0].PubPeriod);
-
-		loop_cnt += 1;
+		point->publish(ThemeUpload[0].CtrlPub, ThemeUpload[0].QosPub, publish_json);
+		if(!i)
+			sleep(ThemeUpload[0].PubPeriod);
 	}
 }

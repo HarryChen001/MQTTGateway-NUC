@@ -3,6 +3,8 @@
 #include <cstring>
 #include <unistd.h>	//sleep()
 #include <thread>
+#include <queue>
+#include <map>
 
 #include "modbus/modbus-rtu.h"
 
@@ -28,14 +30,18 @@ using std::endl;
 using std::string;
 
 ConnectInfo_t MqttInfo[1];
-DeviceInfo_t DevInfo[30];
+DeviceInfo_t DevInfo[10];
 PortInfo_t PortInfo[10];
 ThemeCtrl_t ThemeCtrl[1];
 ThemeUpload_t ThemeUpload[1];
-ThemeUploadList_t ThemeUploadList[2000];
-VarParam_t VarParam[2000];
+ThemeUploadList_t ThemeUploadList[200];
+VarParam_t VarParam[200];
+
 enumdatatype datatype;
-var_t varinfo[100];
+Allinfo_t Allinfo[15];
+Varinfo_t varinfo[100];
+
+std::map<std::string, double>var;
 
 #define BASE64_ENCODE_TEST
 #define BASE64_DECODE_TEST
@@ -159,6 +165,9 @@ int main(int argc, char* argv[])
 	MySqlite db(argv[1]);
 	db.GetAllInfo();
 	db.~MySqlite();
+
+	modbus newmodbus;
+	newmodbus.openmainthread();
 
 	MyAliyunMqtt Mqtt;
 	Mqtt.openmainthread();
