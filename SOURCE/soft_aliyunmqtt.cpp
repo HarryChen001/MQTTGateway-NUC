@@ -68,28 +68,29 @@ int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
 int MyAliyunMqtt::publish(char* publishtopic, int Qos, cJSON* json_payload)
 {
 	int res = -1;
-	char* payload = cJSON_Print(json_payload);
 	iotx_mqtt_topic_info_t topic_msg;
-	char* publish_payload = (char*)malloc(strlen(cJSON_PrintUnformatted(json_payload)) + 1);
+	char* publish_payload = (char*)malloc(strlen(cJSON_Print(json_payload)) + 1);
+
+	publish_payload = cJSON_PrintUnformatted(json_payload);
 	topic_msg.qos = Qos;
 	topic_msg.retain = 0;
 	topic_msg.dup = 0;
 	topic_msg.payload = publish_payload;
-	topic_msg.payload_len = strlen(payload);
+	topic_msg.payload_len = strlen(publish_payload);
 
 	res = IOT_MQTT_Publish(pclient, publishtopic, &topic_msg);
 
 	cout << BOLDGREEN << "Publish to topic : " << publishtopic << endl;
-
+	publish_payload = cJSON_Print(json_payload);
 	if (res < 0)
 	{
-		cout << BOLDRED << "FAILED!" << endl;
-		cout << BOLDYELLOW << "Paylod is :\n " << BOLDRED << payload << RESET << endl;
+		cout << BOLDRED << "FAILED!" << endl << endl;
+		cout << BOLDYELLOW << "Paylod is :\n " << BOLDRED << publish_payload << RESET << endl;
 		free(publish_payload);
 		return -1;
 	}
-	cout << BOLDYELLOW << "success!" << endl;
-	cout << BOLDGREEN << "Paylod is -> " << payload << RESET << endl;
+	cout << BOLDYELLOW << "SUCCESS!" << endl << endl;
+	cout << BOLDGREEN << "Paylod is -> " << publish_payload << RESET << endl;
 	free(publish_payload);
 	return 0;
 }
@@ -303,9 +304,9 @@ int MyAliyunMqtt::MqttMain(void* Params)
 
 	point->openintervalthread();		//create MQTT interval thread
 	point->openrecparsethread();		//create thread----parse the receive data
-	static int i = 0;
 	while (1)
 	{
+		static int i = 0;
 		if (!ThemeUploadList[0].UploadCount)
 			continue;
 		time_t nowtime;
@@ -320,13 +321,12 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		cJSON_AddStringToObject(publish_json, "id", tmp);
 		cJSON_AddStringToObject(publish_json, "method", "method.event.property.post");
 		cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
-		cout << BOLDMAGENTA << i << endl;
 		for (i; i < ThemeUploadList[0].UploadCount; i++)
 		{
 			std::string varname =  ThemeUploadList[i].VarName;
 			double value = var[ThemeUploadList[i].VarName];
 			cJSON_AddNumberToObject(params_json, varname.c_str(), value);
-			if (!(i % 50) && i != 0)
+			if (!(i % uploadperiod) && i != 0)
 			{
 				i++;
 				break;
