@@ -14,9 +14,10 @@
 #define DeviceNums 10
 #define ThemeCtrlNums 1
 #define ThemeUploadNums 1
-#define VarNums 500
+#define AllVarNums 500
+#define VarNumsPeriodDev 200
 #define UploadVarNums 500
-#define uploadperiod 20
+#define uploadperiod 50
 
 #define RESET   "\033[0m"
 #define BLACK   "\033[30m"      /* Black */
@@ -37,7 +38,7 @@
 #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
 enum enumdatatype {
-	uint16, uint32, uint64, int16, int32, int64, float_type, double_type, data_no_type
+	bool_type, uint16, uint32, uint64, int16, int32, int64, float_type, double_type, data_no_type
 };
 enum enumregtype {
 	B0, B1, W3, W4, reg_no_type
@@ -95,19 +96,19 @@ typedef struct _ThemeUploadList_t {
 	int UploadId;			//�󶨵�UploadId
 	int DevId;				//�󶨵��豸��Ϣ�е�DevInfo��id
 	int VarId;				//�󶨱�����VarParam��Id
-	char VarName[100];		//������
+	std::string VarName;		//������
 
 	int UploadCount;
 }ThemeUploadList_t;
 
 typedef struct _VarParam_t {
 	int id;					//VarParam Id
-	char DataType[20];		//��������
+	std::string DataType;		//��������
 	int DecimalsBit;		//С��λ
 	int obj;				//
 	int RegAdr;				//�Ĵ�����ַ
-	char RegType[10];		//�Ĵ������ͣ�B0���߼���Ȧ����B1�����������룩��W3�����ּĴ�������W4������Ĵ�����
-	char VarName[100];		//��������
+	std::string RegType;		//�Ĵ������ͣ�B0���߼���Ȧ����B1�����������룩��W3�����ּĴ�������W4������Ĵ�����
+	std::string VarName;		//��������
 	int PortId;				//�󶨵Ĵ���Id
 	int DevId;				//�󶨵��豸Id
 	float modules;			//ת��ϵ��
@@ -124,8 +125,10 @@ typedef struct _DeviceInfo_t {
 	char DeviceName[100];	//�豸��
 
 	int devcount;
-	VarParam_t varparam[100];
-	int varcount;
+	VarParam_t uploadvarparam[UploadVarNums];
+	VarParam_t allvarparams[VarNumsPeriodDev];
+	int allvarcount;
+	int uploadvarcount;
 }DeviceInfo_t;
 
 typedef struct _ConnectInfo_t {
@@ -157,9 +160,8 @@ typedef struct _Allinfo_t {
 	modbus_t* fdmodbus;
 	PortInfo_t portinfo;
 
-	DeviceInfo_t deviceinfo[10];
+	DeviceInfo_t deviceinfo[DeviceNums];
 	int devcount;
-	int varcount;
 }Allinfo_t;
 union doubleunion
 {
@@ -175,16 +177,16 @@ typedef struct _Varinfo_t {
 	std::string varname;
 	double value;
 }Varinfo_t;
-extern ConnectInfo_t MqttInfo[1];
-extern DeviceInfo_t DevInfo[10];
-extern PortInfo_t PortInfo[10];
-extern ThemeCtrl_t ThemeCtrl[1];
-extern ThemeUpload_t ThemeUpload[1];
-extern ThemeUploadList_t ThemeUploadList[200];
-extern VarParam_t VarParam[200];
+extern ConnectInfo_t MqttInfo[MqttConnect];
+extern PortInfo_t PortInfo[SerialNums];
+extern ThemeCtrl_t ThemeCtrl[ThemeCtrlNums];
+extern ThemeUpload_t ThemeUpload[ThemeUploadNums];
 
 extern enumdatatype datatype;
 extern Allinfo_t Allinfo[15];
 extern std::map<std::string, double>var;
+extern std::map<std::string, double>var_write;
+extern std::queue<Varinfo_t>queue_var_write;
+extern Varinfo_t varinfo;
 
 #endif // !_MY_DATA_H_
