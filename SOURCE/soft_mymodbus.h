@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include <string>
 #include <queue>
+#include <thread>
+#include <mutex>
 #include"modbus/modbus.h"
 #include "MyData.h"
 
@@ -21,9 +23,9 @@ private:
 	void modbus_set_float_to_int16(uint16_t buff[], float input);
 	float modbus_get_float_from_int16(uint16_t buff[]);
 	int modbus_rtu_init();
-	static void* modbus_read_thread(void* params);
-	pthread_t pthread_id = 0;
-	pthread_mutex_t pthread_mutex;
+	static void modbus_read_thread(modbus* params);
+	static void modbus_write_thead(modbus* params);
+	std::mutex modbus_mutex;
 };
 
 #endif // _SOFT_MYMODBUS_H_

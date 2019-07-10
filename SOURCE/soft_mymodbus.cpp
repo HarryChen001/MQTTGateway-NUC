@@ -8,12 +8,14 @@
 #include <unistd.h>
 #include <queue>
 #include <map>
+#include <thread>
 
 #include "MyData.h"
 using std::cout;
 using std::endl;
 using std::string;
 using std::queue;
+using std::map;
 
 int portsubscript;
 int varsubscript = 0;
@@ -80,6 +82,7 @@ float modbus_get_float_from_int16(uint16_t buff[])
 	floattype.int32type = MODBUS_GET_INT32_FROM_INT16(buff, 0);
 	return floattype.floattype;
 }
+/*
 int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 {
 	modbus_t* mb;
@@ -89,7 +92,8 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 	uint16_t write_buff[10];
 	for (int i = 0; i < VarParam[0].VarCount; i++)
 	{
-		if (!strcmp(VarParam[i].VarName, varname))
+	//	if (!strcmp(VarParam[i].VarName, varname))
+		if(VarParam[i].VarName == varname)
 		{
 			varsubscript = i;
 			portid = VarParam[i].PortId;
@@ -296,7 +300,7 @@ int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
 	modbus_close(mb);
 	modbus_free(mb);
 	return 0;
-}
+}*/
 modbus::modbus()
 {
 
@@ -318,17 +322,30 @@ int modbus::modbus_rtu_init()
 		int stopbits = Allinfo[i].portinfo.StopBits;
 		char parity = Allinfo[i].portinfo.Parity[0];
 		string serial;
-
+#ifdef gcc
+		if (portnums == 10)
+			portnums = 0;
+		else if (portnums == 3)
+			portnums = 1;
+		else if (portnums == 9)
+			portnums = 2;
+		else if (portnums == 1)
+			portnums = 3;
+		else if (portnums == 6)
+			portnums = 4;
+		else if (portnums == 7)
+			portnums = 5;
+		else if (portnums == 2)
+			portnums = 6;
+		else if (portnums == 8)
+			portnums = 7;
+		else if (portnums == 4)
+			portnums = 8;
+#endif
 		sprintf((char*)serial.c_str(), "%s%d", "/dev/ttyS", portnums);
 
 		Allinfo[i].fdmodbus = modbus_new_rtu(serial.c_str(), baud, parity, databits, stopbits);
 //		modbus_set_debug(Allinfo[i].fdmodbus, 1);
-#ifdef gcc
-		if (portnums == 10)
-			portnums = 0;
-		if (portnums == 3)
-			portnums = 1;
-#endif
 #ifndef gcc
 		int ret = -1;
 		while (ret == -1 && Allinfo[i].portinfo.gpio != -1)
@@ -349,7 +366,7 @@ int modbus::modbus_rtu_init()
 		}
 	}
 }
-void* modbus::modbus_read_thread(void* params)
+void modbus::modbus_read_thread(modbus* params)
 {
 	modbus* point = (modbus*)params;
 	point->modbus_rtu_init();
@@ -371,9 +388,10 @@ void* modbus::modbus_read_thread(void* params)
 				int regendian = Allinfo[i].deviceinfo[j].regedian;
 				int regbyteorder = Allinfo[i].deviceinfo[j].byteorder;
 				modbus_set_slave(modbus, Allinfo[i].deviceinfo[j].address);
-				for (int k = 0; k < Allinfo[i].deviceinfo[j].varcount; k++)
+				for (int k = 0; k < Allinfo[i].deviceinfo[j].uploadvarcount; k++)
 				{
-					VarParam_t* vartemp = &(Allinfo[i].deviceinfo[j].varparam[k]);
+					/*check variable */
+					VarParam_t* vartemp = &(Allinfo[i].deviceinfo[j].uploadvarparam[k]);
 					if (vartemp->id == 0)
 						continue;
 					int regadr = vartemp->RegAdr;
@@ -420,11 +438,29 @@ void* modbus::modbus_read_thread(void* params)
 						datatype = double_type;
 						regnums = 4;
 					}
+					else if (datatypetemp == "bool")
+					{
+						datatype = bool_type;
+					}
+					memset(buff, 0, sizeof(buff));
 					if (regtypetemp == "W3")
 					{
 						modbus_read_registers(modbus, regadr, regnums, buff);
 					}
-					if(datatype != uint16 && datatype != int16)
+					else if (regtypetemp == "W4")
+					{
+						modbus_read_input_registers(modbus, regadr, regnums, buff);
+					}
+					else if (regtypetemp == "B0")
+					{
+						modbus_read_bits(modbus, regadr, regnums, (uint8_t*)buff);
+					}
+					else if (regtypetemp == "B1")
+					{
+						modbus_read_input_bits(modbus, regadr, regnums, (uint8_t*)buff);
+					}
+
+					if (datatype != uint16 && datatype != int16 && datatype != bool_type)
 						ByteChange(buff, regnums, regendian, regbyteorder);
 
 					string varnametemp = vartemp->VarName;
@@ -450,7 +486,7 @@ void* modbus::modbus_read_thread(void* params)
 					}
 					else if (datatype == int64)
 					{
-						var[varnametemp] = (int64_t)MODBUS_GET_INT32_FROM_INT16(buff, 0);
+						var[varnametemp] = (int64_t)MODBUS_GET_INT64_FROM_INT16(buff, 0);
 					}
 					else if (datatype == float_type)
 					{
@@ -460,16 +496,63 @@ void* modbus::modbus_read_thread(void* params)
 					{
 						var[varnametemp] = point->modbus_get_double_from_int16(buff);
 					}
+					else if(datatype == bool_type)
+					{
+						var[varnametemp] = buff[0];
+					}
 				}
 			}
 		}
-		sleep(1);
+	}
+}
+void modbus::modbus_write_thead(modbus* params)
+{
+	while (1)
+	{
+		while (!queue_var_write.empty())
+		{
+			string rec_varname  = queue_var_write.front().varname;
+			double rec_value = queue_var_write.front().value;
+			queue_var_write.pop();
+			cout << rec_varname.c_str() << rec_value << endl;
+			for (int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
+			{
+				if (Allinfo[i].portinfo.id == 0)
+				{
+					continue;
+				}
+				for (int j = 0; j < sizeof(Allinfo[i].deviceinfo) / sizeof(DeviceInfo_t); j++)
+				{
+					DeviceInfo_t* devicetemp = &Allinfo[i].deviceinfo[j];
+					if (devicetemp->id == 0)
+					{
+						continue;
+					}
+					for (int k = 0; k < sizeof(Allinfo[i].deviceinfo[j].uploadvarparam) / sizeof(VarParam_t); k++)
+					{
+						VarParam_t* varparamstemp = &devicetemp->uploadvarparam[k];
+						if (varparamstemp->id == 0)
+						{
+							continue;
+						}
+						if (varparamstemp->VarName == rec_varname)
+						{
+							int portnums = i;
+							int devsubscript = j;
+						}
+					}
+				}
+			}
+		}
+		usleep(100);
 	}
 }
 int modbus::openmainthread()
 {
-	pthread_create(&pthread_id, NULL, modbus_read_thread, this);
-
+	std::thread t1(modbus_read_thread, this);
+	t1.detach();
+	std::thread t2(modbus_write_thead, this);
+	t2.detach();
 }
 
 void modbus::modbus_set_double_to_int16(uint16_t buff[], double input)
