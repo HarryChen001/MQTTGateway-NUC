@@ -4,7 +4,6 @@
 #include <unistd.h>	//sleep()
 #include <thread>
 #include <queue>
-#include <map>
 
 #include "modbus/modbus-rtu.h"
 
@@ -29,19 +28,21 @@ using std::cout;
 using std::endl;
 using std::string;
 
-ConnectInfo_t MqttInfo[1];
-DeviceInfo_t DevInfo[10];
-PortInfo_t PortInfo[10];
-ThemeCtrl_t ThemeCtrl[1];
-ThemeUpload_t ThemeUpload[1];
-ThemeUploadList_t ThemeUploadList[200];
-VarParam_t VarParam[200];
+ConnectInfo_t MqttInfo[MqttConnect];
+DeviceInfo_t DevInfo[DeviceNums];
+PortInfo_t PortInfo[SerialNums];
+ThemeCtrl_t ThemeCtrl[ThemeCtrlNums];
+ThemeUpload_t ThemeUpload[ThemeUploadNums];
+ThemeUploadList_t ThemeUploadList[UploadVarNums];
+VarParam_t VarParam[AllVarNums];
 
 enumdatatype datatype;
 Allinfo_t Allinfo[15];
-Varinfo_t varinfo[100];
+Varinfo_t varinfo;
 
 std::map<std::string, double>var;
+std::map<std::string, double>var_write;
+std::queue<Varinfo_t>queue_var_write;
 
 #define BASE64_ENCODE_TEST
 #define BASE64_DECODE_TEST
@@ -165,7 +166,25 @@ int main(int argc, char* argv[])
 	MySqlite db(argv[1]);
 	db.GetAllInfo();
 	db.~MySqlite();
-
+/*	for (int i = 0; i < 15; i++)
+	{
+		if (Allinfo[i].portinfo.id == 0)
+			continue;
+		for (int j = 0; j < sizeof(Allinfo[i].deviceinfo)/sizeof(DeviceInfo_t); j++)
+		{
+			if (Allinfo[i].deviceinfo[j].id == 0)
+			{
+				continue;
+			}
+			VarParam_t* temp = Allinfo[i].deviceinfo[j].uploadvarparam;
+			for (int k = 0; k < Allinfo[i].deviceinfo[j].uploadvarcount; k++)
+			{
+				if (temp->id == 0)
+					continue;
+				cout << temp[k].VarName << temp[k].id << endl;
+			}
+		}
+	}*/
 	modbus newmodbus;
 	newmodbus.openmainthread();
 
