@@ -9,6 +9,8 @@
 
 #include "soft_mymodbus.h"
 
+typedef void (rts)(modbus_t*, int);
+
 #define MqttConnect 1
 #define SerialNums 10
 #define DeviceNums 10
@@ -112,6 +114,7 @@ typedef struct _VarParam_t {
 	int PortId;				//�󶨵Ĵ���Id
 	int DevId;				//�󶨵��豸Id
 	float modules;			//ת��ϵ��
+	enumdatatype datatype;
 
 	int VarCount;		//����������
 }VarParam_t;
@@ -182,7 +185,6 @@ extern PortInfo_t PortInfo[SerialNums];
 extern ThemeCtrl_t ThemeCtrl[ThemeCtrlNums];
 extern ThemeUpload_t ThemeUpload[ThemeUploadNums];
 
-extern enumdatatype datatype;
 extern Allinfo_t Allinfo[15];
 extern std::map<std::string, double>var;
 extern std::map<std::string, double>var_write;

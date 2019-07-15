@@ -188,12 +188,17 @@ int main(int argc, char* argv[])
 	modbus newmodbus;
 	newmodbus.openmainthread();
 
-
 	MyAliyunMqtt Mqtt;
 	Mqtt.openmainthread();
 
 	while (1)
 	{
+		char input;
+		std::cin >> input;
+		if(input == 'q' || input == 'Q')
+		{
+			return -1;
+		}
 		sleep(1);
 	}
 	return 0;

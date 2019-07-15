@@ -162,6 +162,7 @@ int MySqlite::GetAllInfo()
 		Allinfo[portnums].portinfo.DataBits = (*i).get<int>(7);
 		Allinfo[portnums].portinfo.StopBits = (*i).get<int>(8);
 		Allinfo[portnums].portinfo.DelayTime = (*i).get<int>(9);
+		Allinfo[portnums].portinfo.gpio = PortInfo[j].gpio;
 
 		j++;
 	}

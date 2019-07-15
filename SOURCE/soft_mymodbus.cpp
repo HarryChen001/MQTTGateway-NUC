@@ -17,25 +17,41 @@ using std::string;
 using std::queue;
 using std::map;
 
-int portsubscript;
-int varsubscript = 0;
-int devsubscript = 0;
-
-void setrts(modbus_t* ctx, int on)
+void setrts_com1(modbus_t* ctx,int on)
 {
-	char control[100];
-	if (on == 1)
-	{
-		sprintf(control, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", PortInfo[portsubscript].gpio, "/value");
-		system(control);
-	}
+	if(on)
+		system("echo 1 > /sys/class/gpio/gpio46/value");
 	else
-	{
-		sprintf(control, "%s%d%s", "echo 0 > /sys/class/gpio/gpio", PortInfo[portsubscript].gpio, "/value");
-		system(control);
-	}
+		system("echo 0 > /sys/class/gpio/gpio46/value");
 }
-
+void setrts_com2(modbus_t* ctx,int on)
+{
+	if(on)
+		system("echo 1 > /sys/class/gpio/gpio103/value");
+	else
+		system("echo 0 > /sys/class/gpio/gpio103/value");
+}
+void setrts_com3(modbus_t* ctx,int on)
+{
+	if(on)
+		system("echo 1 > /sys/class/gpio/gpio102/value");
+	else
+		system("echo 0 > /sys/class/gpio/gpio102/value");
+}
+void setrts_com4(modbus_t* ctx,int on)
+{
+	if(on)
+		system("echo 1 > /sys/class/gpio/gpio132/value");
+	else
+		system("echo 0 > /sys/class/gpio/gpio132value");
+}
+void setrts_com5(modbus_t* ctx,int on)
+{
+	if(on)
+		system("echo 1 > /sys/class/gpio/gpio33/value");
+	else
+		system("echo 0 > /sys/class/gpio/gpio33/value");
+}
 void ByteChange(uint16_t* buff, int nums, int endian, int byteorder)
 {
 	if (!endian)
@@ -82,228 +98,8 @@ float modbus_get_float_from_int16(uint16_t buff[])
 	floattype.int32type = MODBUS_GET_INT32_FROM_INT16(buff, 0);
 	return floattype.floattype;
 }
-/*
-int modbus_set(int write, double inputdata, char* varname, double* buff_dest)
-{
-	modbus_t* mb;
-	int portid = 0;
-	char serialport[20];
-	uint16_t buff[10];
-	uint16_t write_buff[10];
-	for (int i = 0; i < VarParam[0].VarCount; i++)
-	{
-	//	if (!strcmp(VarParam[i].VarName, varname))
-		if(VarParam[i].VarName == varname)
-		{
-			varsubscript = i;
-			portid = VarParam[i].PortId;
-			break;
-		}
-	}
-	for (int i = 0; i < PortInfo[0].portcount; i++)
-	{
-		if (PortInfo[i].id == portid)
-		{
-			portsubscript = i;
-			break;
-		}
-	}
-	for (int i = 0; i < DevInfo[0].devcount; i++)
-	{
-		if (VarParam[varsubscript].DevId == DevInfo[i].id)
-			devsubscript = i;
-	}
-	sprintf(serialport, "%s%d", "/dev/ttyS", PortInfo[portsubscript].PortNum -10 );
-
-	char parity = PortInfo[portsubscript].Parity[0];
-	mb = modbus_new_rtu(serialport, PortInfo[portsubscript].baud, parity, PortInfo[portsubscript].DataBits, PortInfo[portsubscript].StopBits);
-	if (mb == NULL)
-	{
-		printf("Unable to create the libmodbus context\n");
-		return -1;
-	}
-
-//#define modbus_debug
-#ifdef modbus_debug
-	modbus_set_debug(mb, 1);
-#endif
-	modbus_set_slave(mb, DevInfo[devsubscript].address);
-#ifndef gcc
-	int ret = -1;
-	while (ret == -1 && PortInfo[portsubscript].gpio != -1)
-	{
-		ret = modbus_rtu_set_rts(mb, MODBUS_RTU_RTS_UP);
-	}
-	ret = -1;
-	while (ret == -1 && PortInfo[portsubscript].gpio != -1)
-	{
-		ret = modbus_rtu_set_custom_rts(mb, setrts);
-	}
-#endif
-	if (modbus_connect(mb) == -1)
-	{
-		printf("Modbus Connection failed\n");
-		modbus_free(mb);
-		//	    return -1;
-	}
-	struct timeval t;
-	t.tv_sec = 0;
-	t.tv_usec = 500000;
-	modbus_set_response_timeout(mb, t.tv_sec, t.tv_usec);
-	modbus_set_byte_timeout(mb, t.tv_sec, t.tv_usec);
-	if (!write)
-		memset(buff, 0, sizeof(buff));
-	int res = -1;
-	int count = 0;
-	int regnums = 1;
-
-	int regdian = DevInfo[devsubscript].regedian;
-	int byteorder = DevInfo[devsubscript].byteorder;
-
-	//	regdian = 1;
-	//	byteorder = 1;
-		//	strcpy(VarParam[varsubscript].DataType, "int32");
-	if (write)
-	{
-		cout << "inputdata is " << inputdata << endl;
-		memset(write_buff, 0, sizeof(write_buff));
-		MODBUS_SET_INT64_TO_INT16(write_buff, 0, (int64_t)inputdata);
-	}
-	if (!strcmp("uint16", VarParam[varsubscript].DataType))
-	{
-		datatype = uint16;
-		regnums = 1;
-		write_buff[0] = write_buff[3];
-	}
-	else if (!strcmp("uint32", VarParam[varsubscript].DataType))
-	{
-		datatype = uint32;
-		regnums = 2;
-		write_buff[0] = write_buff[2];
-		write_buff[1] = write_buff[3];
-	}
-	else if (!strcmp("uint64", VarParam[varsubscript].DataType))
-	{
-		datatype = uint64;
-		regnums = 4;
-	}
-	else if (!strcmp("int16", VarParam[varsubscript].DataType))
-	{
-		datatype = int16;
-		regnums = 1;
-		write_buff[0] = write_buff[3];
-	}
-	else if (!strcmp("int32", VarParam[varsubscript].DataType))
-	{
-		datatype = int32;
-		regnums = 2;
-		write_buff[0] = write_buff[2];
-		write_buff[1] = write_buff[3];
-	}
-	else if (!strcmp("int64", VarParam[varsubscript].DataType))
-	{
-		datatype = int64;
-		regnums = 4;
-	}
-	else if (!strcmp("double", VarParam[varsubscript].DataType))
-	{
-		datatype = double_type;
-		regnums = 4;
-		modbus_set_double_to_int16(write_buff, inputdata);
-	}
-	else if (!strcmp("float", VarParam[varsubscript].DataType))
-	{
-		datatype = float_type;
-		regnums = 2;
-		floatunion floattype;
-		floattype.floattype = inputdata;
-		modbus_set_float_to_int16(write_buff, floattype.floattype);
-	}
-	if (datatype != int16 && datatype != uint16)
-		ByteChange(write_buff, regnums, regdian, byteorder);
-
-	while (res == -1)
-	{
-		count++;
-		if (count >= 5)
-			break;
-
-		if (!strcmp("B0", VarParam[varsubscript].RegType))
-		{
-			if (!write)
-				res = modbus_read_bits(mb, VarParam[varsubscript].RegAdr, 1, (uint8_t*)buff);
-			else
-				res = modbus_write_bit(mb, VarParam[varsubscript].RegAdr, inputdata);
-		}
-		else if (!strcmp("B1", VarParam[varsubscript].RegType))
-		{
-			if (!write)
-				res = modbus_read_input_bits(mb, VarParam[varsubscript].RegAdr, 1, (uint8_t*)buff);
-		}
-		else if (!strcmp("W3", VarParam[varsubscript].RegType))
-		{
-			if (!write)
-				res = modbus_read_registers(mb, VarParam[varsubscript].RegAdr, regnums, (uint16_t*)buff);
-			else
-				res = modbus_write_registers(mb, VarParam[varsubscript].RegAdr, regnums, write_buff);
-
-		}
-		else if (!strcmp("W4", VarParam[varsubscript].RegType))
-		{
-			if (!write)
-				res = modbus_read_input_registers(mb, VarParam[varsubscript].RegAdr, regnums, (uint16_t*)buff);
-		}
-	}
-
-	if (write)
-		return 0;
-	if (regnums == 1)
-	{
-		if (datatype == uint16)
-		{
-			*buff_dest = ((uint16_t)buff[0]) * VarParam[varsubscript].modules;
-		}
-		else
-		{
-			*buff_dest = ((int16_t)buff[0]) * VarParam[varsubscript].modules;
-		}
-	}
-	else
-	{
-		ByteChange(buff, regnums, regdian, byteorder);
-
-		if (datatype == uint32)
-		{
-			*buff_dest = (uint32_t)MODBUS_GET_INT32_FROM_INT16(buff, 0);
-		}
-		else if (datatype == uint64)
-		{
-			*buff_dest = (uint64_t)MODBUS_GET_INT64_FROM_INT16(buff, 0);
-		}
-		else if (datatype == int32)
-		{
-			*buff_dest = (int32_t)MODBUS_GET_INT32_FROM_INT16(buff, 0);
-		}
-		else if (datatype == int64)
-		{
-			*buff_dest = (int64_t)MODBUS_GET_INT64_FROM_INT16(buff, 0);
-		}
-		else if (datatype == float_type)
-		{
-			*buff_dest = modbus_get_float_from_int16(buff);
-		}
-		else if (datatype == double_type)
-		{
-			*buff_dest = modbus_get_double_from_int16(buff);
-		}
-	}
-	modbus_close(mb);
-	modbus_free(mb);
-	return 0;
-}*/
 modbus::modbus()
 {
-
 }
 modbus::~modbus()
 {
@@ -311,6 +107,7 @@ modbus::~modbus()
 }
 int modbus::modbus_rtu_init()
 {
+	write_flag = 0;
 	for (int i = 0; i < 15; i++)
 	{
 		if (Allinfo[i].portinfo.PortNum == 0)
@@ -355,6 +152,25 @@ int modbus::modbus_rtu_init()
 		ret = -1;
 		while (ret == -1 && Allinfo[i].portinfo.gpio != -1)
 		{
+			rts* setrts;
+			if(portnums == 10)
+				setrts = setrts_com1;
+			else if(portnums == 3)
+			{
+				setrts = setrts_com2;
+			}
+			else if(portnums == 9)
+			{
+				setrts = setrts_com3;
+			}
+			else if(portnums == 1)
+			{
+				setrts = setrts_com4;
+			}
+			else if(portnums == 6)
+			{
+				setrts = setrts_com5;
+			}
 			ret = modbus_rtu_set_custom_rts(Allinfo[i].fdmodbus, setrts);
 		}
 #endif
@@ -364,141 +180,159 @@ int modbus::modbus_rtu_init()
 			cout << "faile to connect" << endl;
 			exit(0);
 		}
+		unsigned int sec = 0;
+		unsigned int usec = 100000;
+//		modbus_set_response_timeout(Allinfo[i].fdmodbus, sec, usec);
 	}
 }
-void modbus::modbus_read_thread(modbus* params)
+void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 {
-	modbus* point = (modbus*)params;
-	point->modbus_rtu_init();
+	params->modbus_rtu_init();
 	while (1)
 	{
-		for (int i = 0; i < sizeof(Allinfo)/sizeof(Allinfo_t); i++)
+		modbus_t* modbus = pallinfotemp->fdmodbus;
+		uint16_t buff[10];
+
+		for (int j = 0; j < pallinfotemp->devcount; j++)
 		{
-			if (Allinfo[i].portinfo.id == 0)
+			if (pallinfotemp->deviceinfo[j].id == 0)
 				continue;
-			modbus_t* modbus = Allinfo[i].fdmodbus;
-
-			uint16_t buff[10];
-
-			for (int j = 0; j < Allinfo[i].devcount; j++)
+			int regendian = pallinfotemp->deviceinfo[j].regedian;
+			int regbyteorder = pallinfotemp->deviceinfo[j].byteorder;
+			modbus_set_slave(modbus, pallinfotemp->deviceinfo[j].address);
+			for (int k = 0; k < pallinfotemp->deviceinfo[j].uploadvarcount; k++)
 			{
-				if (Allinfo[i].deviceinfo[j].id == 0)
-					continue;
-
-				int regendian = Allinfo[i].deviceinfo[j].regedian;
-				int regbyteorder = Allinfo[i].deviceinfo[j].byteorder;
-				modbus_set_slave(modbus, Allinfo[i].deviceinfo[j].address);
-				for (int k = 0; k < Allinfo[i].deviceinfo[j].uploadvarcount; k++)
+				/*check variable */
+				VarParam_t* vartemp = &(pallinfotemp->deviceinfo[j].uploadvarparam[k]);
+				int regadr = vartemp->RegAdr;
+				int regnums = 1;
+				int rc = -1;
+				string regtypetemp = vartemp->RegType;
+				string str_datatypetemp = vartemp->DataType;
+				enumdatatype* datatypetemp;
+				datatypetemp = &vartemp->datatype;
+				if (str_datatypetemp == "uint16")
 				{
-					/*check variable */
-					VarParam_t* vartemp = &(Allinfo[i].deviceinfo[j].uploadvarparam[k]);
-					if (vartemp->id == 0)
-						continue;
-					int regadr = vartemp->RegAdr;
-					int regnums = 1;
-					string regtypetemp = vartemp->RegType;
-					string datatypetemp = vartemp->DataType;
-					if (datatypetemp == "uint16")
+					*datatypetemp = uint16;
+					regnums = 1;
+				}
+				else if (str_datatypetemp == "uint32")
+				{
+					*datatypetemp = uint32;
+					regnums = 2;
+				}
+				else if (str_datatypetemp == "uint64")
+				{
+					*datatypetemp = uint64;
+					regnums = 4;
+				}
+				else if (str_datatypetemp == "int16")
+				{
+					*datatypetemp = int16;
+					regnums = 1;
+				}
+				else if (str_datatypetemp == "int32")
+				{
+					*datatypetemp = int32;
+					regnums = 2;
+				}
+				else if (str_datatypetemp == "int64")
+				{
+					*datatypetemp = int64;
+					regnums = 4;
+				}
+				else if (str_datatypetemp == "float")
+				{
+					*datatypetemp = float_type;
+					regnums = 2;
+				}
+				else if (str_datatypetemp == "double")
+				{
+					*datatypetemp = double_type;
+					regnums = 4;
+				}
+				else if (str_datatypetemp == "bool")
+				{
+					*datatypetemp = bool_type;
+					regnums = 1;
+				}
+				int count = 0;
+				while (rc == -1)
+				{
+					while (params->write_flag)
 					{
-						datatype = uint16;
-						regnums = 1;
+						cout << "Writing" << endl;
+						sleep(1);
 					}
-					else if (datatypetemp == "uint32")
-					{
-						datatype = uint32;
-						regnums = 2;
-					}
-					else if (datatypetemp == "uint64")
-					{
-						datatype = uint64;
-						regnums = 4;
-					}
-					else if (datatypetemp == "int16")
-					{
-						datatype = int16;
-						regnums = 1;
-					}
-					else if (datatypetemp == "int32")
-					{
-						datatype = int32;
-						regnums = 2;
-					}
-					else if (datatypetemp == "int64")
-					{
-						datatype = int64;
-						regnums = 4;
-					}
-					else if (datatypetemp == "float")
-					{
-						datatype = float_type;
-						regnums = 2;
-					}
-					else if (datatypetemp == "double")
-					{
-						datatype = double_type;
-						regnums = 4;
-					}
-					else if (datatypetemp == "bool")
-					{
-						datatype = bool_type;
-					}
-					memset(buff, 0, sizeof(buff));
 					if (regtypetemp == "W3")
 					{
-						modbus_read_registers(modbus, regadr, regnums, buff);
+						rc = modbus_read_registers(modbus, regadr, regnums, buff);
 					}
 					else if (regtypetemp == "W4")
 					{
-						modbus_read_input_registers(modbus, regadr, regnums, buff);
+						rc = modbus_read_input_registers(modbus, regadr, regnums, buff);
 					}
 					else if (regtypetemp == "B0")
 					{
-						modbus_read_bits(modbus, regadr, regnums, (uint8_t*)buff);
+						memset(buff, 0, sizeof(buff));
+						rc = modbus_read_bits(modbus, regadr, regnums, (uint8_t*)buff);
 					}
 					else if (regtypetemp == "B1")
 					{
-						modbus_read_input_bits(modbus, regadr, regnums, (uint8_t*)buff);
+						memset(buff, 0, sizeof(buff));
+						rc = modbus_read_input_bits(modbus, regadr, regnums, (uint8_t*)buff);
 					}
+					count++;
+					if (count >= 5)
+					{
+						cout << BOLDRED << vartemp->VarName <<  " : read modbus timeout!" << endl << RESET;
+						break;
+					}
+				}
+				if (rc == -1)
+					continue;
 
-					if (datatype != uint16 && datatype != int16 && datatype != bool_type)
-						ByteChange(buff, regnums, regendian, regbyteorder);
+				if (*datatypetemp != uint16 && *datatypetemp != int16 && *datatypetemp != bool_type)
+					ByteChange(buff, regnums, regendian, regbyteorder);
 
+				if (rc != -1)
+				{
 					string varnametemp = vartemp->VarName;
-					if (datatype == uint16)
+					if (*datatypetemp == uint16)
 					{
 						var[varnametemp] = (uint16_t)buff[0];
 					}
-					else if (datatype == uint32)
+					else if (*datatypetemp == uint32)
 					{
 						var[varnametemp] = (uint32_t)MODBUS_GET_INT32_FROM_INT16(buff, 0);
 					}
-					else if (datatype == uint64)
+					else if (*datatypetemp == uint64)
 					{
 						var[varnametemp] = (uint64_t)MODBUS_GET_INT64_FROM_INT16(buff, 0);
 					}
-					else if (datatype == int16)
+					else if (*datatypetemp == int16)
 					{
 						var[varnametemp] = (int16_t)buff[0];
 					}
-					else if (datatype == int32)
+					else if (*datatypetemp == int32)
 					{
 						var[varnametemp] = (int32_t)MODBUS_GET_INT32_FROM_INT16(buff, 0);
 					}
-					else if (datatype == int64)
+					else if (*datatypetemp == int64)
 					{
 						var[varnametemp] = (int64_t)MODBUS_GET_INT64_FROM_INT16(buff, 0);
 					}
-					else if (datatype == float_type)
+					else if (*datatypetemp == float_type)
 					{
-						var[varnametemp] = point->modbus_get_float_from_int16(buff);
+						var[varnametemp] = params->modbus_get_float_from_int16(buff);
 					}
-					else if (datatype == double_type)
+					else if (*datatypetemp == double_type)
 					{
-						var[varnametemp] = point->modbus_get_double_from_int16(buff);
+						var[varnametemp] = params->modbus_get_double_from_int16(buff);
 					}
-					else if(datatype == bool_type)
+					else if (*datatypetemp == bool_type)
 					{
-						var[varnametemp] = buff[0];
+						var[varnametemp] = (uint16_t)buff[0];
 					}
 				}
 			}
@@ -511,16 +345,17 @@ void modbus::modbus_write_thead(modbus* params)
 	{
 		while (!queue_var_write.empty())
 		{
-			string rec_varname  = queue_var_write.front().varname;
+			string rec_varname = queue_var_write.front().varname;
 			double rec_value = queue_var_write.front().value;
+			uint16_t buff[4];
 			queue_var_write.pop();
-			cout << rec_varname.c_str() << rec_value << endl;
 			for (int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 			{
 				if (Allinfo[i].portinfo.id == 0)
 				{
 					continue;
 				}
+				modbus_t* modbus = Allinfo[i].fdmodbus;
 				for (int j = 0; j < sizeof(Allinfo[i].deviceinfo) / sizeof(DeviceInfo_t); j++)
 				{
 					DeviceInfo_t* devicetemp = &Allinfo[i].deviceinfo[j];
@@ -528,31 +363,97 @@ void modbus::modbus_write_thead(modbus* params)
 					{
 						continue;
 					}
-					for (int k = 0; k < sizeof(Allinfo[i].deviceinfo[j].uploadvarparam) / sizeof(VarParam_t); k++)
+					int regendian = devicetemp->regedian;
+					int regbyteorder = devicetemp->byteorder;
+					int slaveid = devicetemp->address;
+					for (int k = 0; k < devicetemp->allvarcount; k++)
 					{
-						VarParam_t* varparamstemp = &devicetemp->uploadvarparam[k];
+						VarParam_t* varparamstemp = &(devicetemp->allvarparams[k]);
 						if (varparamstemp->id == 0)
 						{
 							continue;
 						}
-						if (varparamstemp->VarName == rec_varname)
+						if (rec_varname == varparamstemp->VarName)
 						{
-							int portnums = i;
-							int devsubscript = j;
+							int regadr = varparamstemp->RegAdr;
+							int regnums = 1;
+							string regtypetemp = varparamstemp->RegType;
+							string str_datatypetemp = varparamstemp->DataType;
+							params->write_flag = 1;
+							modbus_flush(modbus);
+							modbus_set_slave(modbus, devicetemp->address);
+							int rc = -1;
+							int count = 0;
+							while (rc == -1)
+							{
+								MODBUS_SET_INT64_TO_INT16(buff, 0, (int64_t)rec_value);
+								uint16_t* tempbuff;
+								if (str_datatypetemp == "uint16"||str_datatypetemp == "int16")
+								{
+									regnums = 1;
+									*tempbuff = (uint16_t)rec_value;
+								}
+								else if (str_datatypetemp == "uint32"||str_datatypetemp == "int32")
+								{
+									regnums = 2;
+									ByteChange(buff, regnums, regendian, regbyteorder);
+									buff[0] = buff[3];
+									buff[1] = buff[2];
+									tempbuff = buff;
+								}
+								else if (str_datatypetemp == "uint64" || str_datatypetemp == "int64" )
+								{
+									regnums = 4;
+									ByteChange(buff, regnums, regendian, regbyteorder);
+									tempbuff = buff;
+								}
+								else if (str_datatypetemp == "float")
+								{
+									regnums = 2;
+									params->modbus_set_float_to_int16(buff, rec_value);
+									ByteChange(buff, regnums, regendian, regbyteorder);
+									tempbuff = buff;
+								}
+								else if(str_datatypetemp == "double")
+								{
+									regnums = 4;
+									params->modbus_set_double_to_int16(buff, rec_value);
+									ByteChange(buff, regnums, regendian, regbyteorder);
+									tempbuff = buff;
+								}
+								if (str_datatypetemp == "bool")
+								{
+									regnums = 1;
+									rc = modbus_write_bit(modbus, regadr, rec_value);
+								}
+								else
+									cout << "write :" <<  modbus_write_registers(modbus, regadr, regnums, tempbuff) << endl;
+								count++;
+								if (count >= 5)
+								{
+									cout << BOLDRED << "Write Failed!" << RESET << endl;
+									break;
+								}
+							}
+							params->write_flag = 0;
 						}
 					}
 				}
 			}
 		}
-		usleep(100);
+		usleep(1000);
 	}
 }
 int modbus::openmainthread()
 {
-	std::thread t1(modbus_read_thread, this);
-	t1.detach();
-	std::thread t2(modbus_write_thead, this);
-	t2.detach();
+	for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
+	{
+		if (Allinfo[i].portinfo.id != 0)
+		{
+			std::thread(modbus_read_thread, this, &Allinfo[i]).detach();
+		}
+	}
+	std::thread(modbus_write_thead, this).detach();
 }
 
 void modbus::modbus_set_double_to_int16(uint16_t buff[], double input)
