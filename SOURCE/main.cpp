@@ -3,7 +3,6 @@
 #include <cstring>
 #include <unistd.h>	//sleep()
 #include <thread>
-#include <queue>
 
 #include "modbus/modbus-rtu.h"
 

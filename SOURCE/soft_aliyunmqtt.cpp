@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <map>
 #include <queue>
 
 #include "mqtt_api.h"

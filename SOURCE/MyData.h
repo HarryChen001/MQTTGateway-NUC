@@ -186,9 +186,8 @@ extern ThemeCtrl_t ThemeCtrl[ThemeCtrlNums];
 extern ThemeUpload_t ThemeUpload[ThemeUploadNums];
 
 extern Allinfo_t Allinfo[15];
-extern std::map<std::string, double>var;
-extern std::map<std::string, double>var_write;
-extern std::queue<Varinfo_t>queue_var_write;
-extern Varinfo_t varinfo;
+extern std::map<std::string, double>var;	//store the data from modbus(read from modbus);
+extern std::queue<Varinfo_t>queue_var_write;	//store the queue to modbus(write to modbus);
+extern Varinfo_t varinfo;					//store the info to queue(write to modbus);
 
 #endif // !_MY_DATA_H_

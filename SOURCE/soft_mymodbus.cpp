@@ -4,7 +4,6 @@
 #include <string>
 #include <string.h>
 #include <stdio.h>
-#include <iomanip>
 #include <unistd.h>
 #include <queue>
 #include <map>
@@ -182,7 +181,7 @@ int modbus::modbus_rtu_init()
 		}
 		unsigned int sec = 0;
 		unsigned int usec = 100000;
-//		modbus_set_response_timeout(Allinfo[i].fdmodbus, sec, usec);
+		modbus_set_response_timeout(Allinfo[i].fdmodbus, sec, usec);
 	}
 }
 void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
@@ -441,7 +440,7 @@ void modbus::modbus_write_thead(modbus* params)
 				}
 			}
 		}
-		usleep(1000);
+		usleep(10000);
 	}
 }
 int modbus::openmainthread()
