@@ -241,14 +241,14 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 
 				if (!ComIsResp)
 				{
-					sprintf(payload, "%s%d %s", "Com", com, "Compelete");
+					sprintf(payload, "Com%d Complete", com);
 				}
 				else
 					strcpy(payload, dest);
 
 				if (seriallen == 0)
 				{
-					sprintf(payload, "%s%d %s", "Com", com, "Timeout");
+					sprintf(payload, "Com%d Timeout",com);
 				}
 
 				cJSON_AddStringToObject(response, "Time", tmp);
