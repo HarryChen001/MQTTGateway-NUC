@@ -1,6 +1,7 @@
 #include "soft_mymodbus.h"
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <string.h>
 #include <stdio.h>
@@ -10,46 +11,65 @@
 #include <thread>
 
 #include "MyData.h"
+
+#define modbus_debug 0
+
 using std::cout;
 using std::endl;
 using std::string;
 using std::queue;
 using std::map;
 
-void setrts_com1(modbus_t* ctx,int on)
+FILE* fp[5];
+
+void set_coms(int gpio,int on)
 {
+	string str;
+	if(gpio == 1)
+		gpio = 46;
+	else if(gpio == 2)
+		gpio = 103;
+	else if(gpio == 3)
+		gpio = 102;
+	else if(gpio == 4)
+		gpio = 132;
+	else if(gpio == 5)
+		gpio = 33;
+
+	sprintf((char*)str.c_str(),"/sys/class/gpio/gpio%d/value",gpio);
+	FILE* fp = fopen(str.c_str(),"rb+");
+	if(fp == NULL)
+	{
+		cout << "open fail:" << gpio << endl;
+		return;
+	}
 	if(on)
-		system("echo 1 > /sys/class/gpio/gpio46/value");
+		fprintf(fp,"1");
 	else
-		system("echo 0 > /sys/class/gpio/gpio46/value");
+		fprintf(fp,"0");
+	fflush(fp);
+	fclose(fp);
 }
-void setrts_com2(modbus_t* ctx,int on)
+
+void setrts_com1(modbus_t* ctx, int on)
 {
-	if(on)
-		system("echo 1 > /sys/class/gpio/gpio103/value");
-	else
-		system("echo 0 > /sys/class/gpio/gpio103/value");
+	set_coms(1,on);
 }
-void setrts_com3(modbus_t* ctx,int on)
+void setrts_com2(modbus_t* ctx, int on)
 {
-	if(on)
-		system("echo 1 > /sys/class/gpio/gpio102/value");
-	else
-		system("echo 0 > /sys/class/gpio/gpio102/value");
+	set_coms(2,on);
 }
-void setrts_com4(modbus_t* ctx,int on)
+void setrts_com3(modbus_t* ctx, int on)
 {
-	if(on)
-		system("echo 1 > /sys/class/gpio/gpio132/value");
-	else
-		system("echo 0 > /sys/class/gpio/gpio132value");
+	set_coms(3,on);
 }
-void setrts_com5(modbus_t* ctx,int on)
+void setrts_com4(modbus_t* ctx, int on)
 {
-	if(on)
-		system("echo 1 > /sys/class/gpio/gpio33/value");
-	else
-		system("echo 0 > /sys/class/gpio/gpio33/value");
+	set_coms(4,on);
+}
+void setrts_com5(modbus_t* ctx, int on)
+{
+	set_coms(5,on);
 }
 void ByteChange(uint16_t* buff, int nums, int endian, int byteorder)
 {
@@ -102,23 +122,22 @@ modbus::modbus()
 }
 modbus::~modbus()
 {
-
 }
-int modbus::modbus_rtu_init()
+void modbus::modbus_rtu_init()
 {
-	write_flag = 0;
 	for (int i = 0; i < 15; i++)
 	{
 		if (Allinfo[i].portinfo.PortNum == 0)
 			continue;
 
+		Allinfo[i].write_flag = false;
 		int portnums = Allinfo[i].portinfo.PortNum;
 		int baud = Allinfo[i].portinfo.baud;
 		int databits = Allinfo[i].portinfo.DataBits;
 		int stopbits = Allinfo[i].portinfo.StopBits;
 		char parity = Allinfo[i].portinfo.Parity[0];
 		string serial;
-#ifdef gcc
+#ifdef gcc //ubuntu debug
 		if (portnums == 10)
 			portnums = 0;
 		else if (portnums == 3)
@@ -141,7 +160,7 @@ int modbus::modbus_rtu_init()
 		sprintf((char*)serial.c_str(), "%s%d", "/dev/ttyS", portnums);
 
 		Allinfo[i].fdmodbus = modbus_new_rtu(serial.c_str(), baud, parity, databits, stopbits);
-//		modbus_set_debug(Allinfo[i].fdmodbus, 1);
+		modbus_set_debug(Allinfo[i].fdmodbus, modbus_debug);
 #ifndef gcc
 		int ret = -1;
 		while (ret == -1 && Allinfo[i].portinfo.gpio != -1)
@@ -149,44 +168,44 @@ int modbus::modbus_rtu_init()
 			ret = modbus_rtu_set_rts(Allinfo[i].fdmodbus, MODBUS_RTU_RTS_UP);
 		}
 		ret = -1;
+		rts* setrts = NULL;
+		if (portnums == 10)
+			setrts = setrts_com1;
+		else if (portnums == 3)
+		{
+			setrts = setrts_com2;
+		}
+		else if (portnums == 9)
+		{
+			setrts = setrts_com3;
+		}
+		else if (portnums == 1)
+		{
+			setrts = setrts_com4;
+		}
+		else if (portnums == 6)
+		{
+			setrts = setrts_com5;
+		}
 		while (ret == -1 && Allinfo[i].portinfo.gpio != -1)
 		{
-			rts* setrts;
-			if(portnums == 10)
-				setrts = setrts_com1;
-			else if(portnums == 3)
-			{
-				setrts = setrts_com2;
-			}
-			else if(portnums == 9)
-			{
-				setrts = setrts_com3;
-			}
-			else if(portnums == 1)
-			{
-				setrts = setrts_com4;
-			}
-			else if(portnums == 6)
-			{
-				setrts = setrts_com5;
-			}
 			ret = modbus_rtu_set_custom_rts(Allinfo[i].fdmodbus, setrts);
 		}
 #endif
-		int rc = modbus_connect(Allinfo[i].fdmodbus);
+		int rc = -1;
+		rc = modbus_connect(Allinfo[i].fdmodbus);
 		while (rc == -1)
 		{
 			cout << "faile to connect" << endl;
 			exit(0);
 		}
 		unsigned int sec = 0;
-		unsigned int usec = 100000;
+		unsigned int usec = 50000;
 		modbus_set_response_timeout(Allinfo[i].fdmodbus, sec, usec);
 	}
 }
 void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 {
-	params->modbus_rtu_init();
 	while (1)
 	{
 		modbus_t* modbus = pallinfotemp->fdmodbus;
@@ -208,8 +227,7 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 				int rc = -1;
 				string regtypetemp = vartemp->RegType;
 				string str_datatypetemp = vartemp->DataType;
-				enumdatatype* datatypetemp;
-				datatypetemp = &vartemp->datatype;
+				enumdatatype* datatypetemp = &vartemp->datatype;
 				if (str_datatypetemp == "uint16")
 				{
 					*datatypetemp = uint16;
@@ -258,7 +276,7 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 				int count = 0;
 				while (rc == -1)
 				{
-					while (params->write_flag)
+					while (pallinfotemp->write_flag == true)
 					{
 						cout << "Writing" << endl;
 						sleep(1);
@@ -282,9 +300,9 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 						rc = modbus_read_input_bits(modbus, regadr, regnums, (uint8_t*)buff);
 					}
 					count++;
-					if (count >= 5)
+					if (count >= 7)
 					{
-						cout << BOLDRED << vartemp->VarName <<  " : read modbus timeout!" << endl << RESET;
+						cout << BOLDRED << vartemp->VarName <<  "read modbus timeout!" << endl << RESET;
 						break;
 					}
 				}
@@ -335,6 +353,7 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 					}
 				}
 			}
+			sleep(1);
 		}
 	}
 }
@@ -342,20 +361,22 @@ void modbus::modbus_write_thead(modbus* params)
 {
 	while (1)
 	{
+		if(!queue_var_write.empty())
+			cout << endl;
 		while (!queue_var_write.empty())
 		{
 			string rec_varname = queue_var_write.front().varname;
 			double rec_value = queue_var_write.front().value;
 			uint16_t buff[4];
 			queue_var_write.pop();
-			for (int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
+			for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 			{
 				if (Allinfo[i].portinfo.id == 0)
 				{
 					continue;
 				}
 				modbus_t* modbus = Allinfo[i].fdmodbus;
-				for (int j = 0; j < sizeof(Allinfo[i].deviceinfo) / sizeof(DeviceInfo_t); j++)
+				for (unsigned int j = 0; j < sizeof(Allinfo[i].deviceinfo) / sizeof(DeviceInfo_t); j++)
 				{
 					DeviceInfo_t* devicetemp = &Allinfo[i].deviceinfo[j];
 					if (devicetemp->id == 0)
@@ -378,9 +399,9 @@ void modbus::modbus_write_thead(modbus* params)
 							int regnums = 1;
 							string regtypetemp = varparamstemp->RegType;
 							string str_datatypetemp = varparamstemp->DataType;
-							params->write_flag = 1;
+							Allinfo[i].write_flag = true;
 							modbus_flush(modbus);
-							modbus_set_slave(modbus, devicetemp->address);
+							modbus_set_slave(modbus, slaveid);
 							int rc = -1;
 							int count = 0;
 							while (rc == -1)
@@ -434,25 +455,32 @@ void modbus::modbus_write_thead(modbus* params)
 									break;
 								}
 							}
-							params->write_flag = 0;
+							Allinfo[i].write_flag = false;
 						}
 					}
 				}
 			}
 		}
-		usleep(10000);
 	}
 }
-int modbus::openmainthread()
+void modbus::openmainthread()
 {
+	modbus_rtu_init();
 	for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 	{
 		if (Allinfo[i].portinfo.id != 0)
 		{
+			int varcount = 0;
+			for(int j = 0; j < Allinfo[i].devcount;j++)
+			{
+				varcount += Allinfo[i].deviceinfo[j].uploadvarcount;
+			}
+			if(varcount == 0)
+				continue;
 			std::thread(modbus_read_thread, this, &Allinfo[i]).detach();
 		}
 	}
-	std::thread(modbus_write_thead, this).detach();
+	std::thread(modbus_write_thead,this).detach();
 }
 
 void modbus::modbus_set_double_to_int16(uint16_t buff[], double input)
