@@ -27,7 +27,7 @@ int MySqlite::selectfrom(char* tablename, char* format, ...)
 	char dbcmd[200];
 
 	va_list	arg_list;
-	va_start(arg_list, format); //һ��Ҫ��...��֮ǰ���Ǹ�����
+	va_start(arg_list, format);
 	vsprintf(dest, format, arg_list);
 	va_end(arg_list);
 	sprintf(dbcmd, "SELECT %s FROM %s", dest, tablename);

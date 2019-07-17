@@ -46,86 +46,86 @@ enum enumregtype {
 	B0, B1, W3, W4, reg_no_type
 };
 
-//�˿ڵĲ�������
+//端口的参数设置
 typedef struct _PortInfo_t {
-	int id;					//Poqrtinfo id
-	int PortId;				//�趨��PortId
+	int id;					//Portinfo id
+	int PortId;				//设定的PortId
 	int PortNum;
-	int PortType;			//�˿�����
-	int baud;				//������
-	char Parity[10];		//��żλ
-	int DataBits;			//����λ
-	int StopBits;			//ֹͣλ
-	int DelayTime;			//�ȴ�ʱ��
-	char PortName[20];		//��������
+	int PortType;			//端口类型
+	int baud;				//波特率
+	char Parity[10];		//奇偶位
+	int DataBits;			//数据位
+	int StopBits;			//停止位
+	int DelayTime;			//等待时间
+	char PortName[20];		//串口命名
 	int gpio;
 
 	int portcount;
 }PortInfo_t;
 
-//����������ز���
+//控制主题相关参数
 typedef struct _ThemeCtrl_t {
 	int id;					//ThemeCtrl id
-	int Enable;				//ʹ�ܿ�������
-	int MqttId;				//�󶨵�MqttId
-	int	QosPub;				//"����"�����Qos
-	int QosSub;				//"����"�����Qos
+	int Enable;				//使能控制主题
+	int MqttId;				//绑定的MqttId
+	int	QosPub;				//"发布"主题的Qos
+	int QosSub;				//"订阅"主题的Qos
 	char proto[10];
-	char CtrlName[100];		//�������������
-	char CtrlPub[100];		//����������
-	char CtrlSub[100];		//���ĵ�����
+	char CtrlName[100];		//控制主题的命名
+	char CtrlPub[100];		//发布的主题
+	char CtrlSub[100];		//订阅的主题
 	int uartID;
 }ThemeCtrl_t;
 
-//�ϴ�������ز���
+//上传主题相关参数
 typedef struct _ThemeUpload_t {
 	int id;					//ThemeUpload Id
-	int Enable;				//�����ϴ�����
-	int MqttId;				//�󶨵�MqttId
-	int UploadId;			//�趨�ķ�������Id
-	int PubPeriod;			//������Ϣ��ʱ����
-	int QosPub;				//���������Qos
-	char CtrlPub[100];		//����������
-	char UploadName[100];	//��ʱ�ϴ����������
-	char Proto[20];			//ͨ��Э��
+	int Enable;				//是能上传主题
+	int MqttId;				//绑定的MqttId
+	int UploadId;			//设定的发布主题Id
+	int PubPeriod;			//发布消息的时间间隔
+	int QosPub;				//发布主题的Qos
+	char CtrlPub[100];		//发布的主题
+	char UploadName[100];	//定时上传主题的命名
+	char Proto[20];			//通信协议
 }ThemeUpload_t;
 
-//�ϴ�����󶨵ı���
+//上传主题绑定的变量
 typedef struct _ThemeUploadList_t {
 	int id;					//ThemeUploadList Id
-	int Enable;				//ʹ���ϴ�
-	int MqttId;				//�󶨵�MqttId
-	int UploadId;			//�󶨵�UploadId
-	int DevId;				//�󶨵��豸��Ϣ�е�DevInfo��id
-	int VarId;				//�󶨱�����VarParam��Id
-	std::string VarName;		//������
+	int Enable;				//使能上传
+	int MqttId;				//绑定的MqttId
+	int UploadId;			//绑定的UploadId
+	int DevId;				//绑定的设备信息中的DevInfo的id
+	int VarId;				//绑定变量表VarParam的Id
+	std::string VarName;	//变量名
 
 	int UploadCount;
 }ThemeUploadList_t;
 
 typedef struct _VarParam_t {
 	int id;					//VarParam Id
-	std::string DataType;		//��������
-	int DecimalsBit;		//С��λ
+	std::string DataType;	//变量类型
+	int DecimalsBit;		//小数位
 	int obj;				//
-	int RegAdr;				//�Ĵ�����ַ
-	std::string RegType;		//�Ĵ������ͣ�B0���߼���Ȧ����B1�����������룩��W3�����ּĴ�������W4������Ĵ�����
-	std::string VarName;		//��������
-	int PortId;				//�󶨵Ĵ���Id
-	int DevId;				//�󶨵��豸Id
-	float modules;			//ת��ϵ��
+	int RegAdr;				//寄存器地址
+	std::string RegType;	//寄存器类型：B0（逻辑线圈），B1（开关量输入），W3（保持寄存器），W4（输入寄存器）
+	std::string VarName;	//变量命名
+	int PortId;				//绑定的串口Id
+	int DevId;				//绑定的设备Id
+	float modules;			//转换系数
 	enumdatatype datatype;
 
-	int VarCount;		//����������
+	int VarCount;			//变量的数量
 }VarParam_t;
-//�豸��������Ϣ
+//设备的设置信息
 typedef struct _DeviceInfo_t {
 	int id;					//devinfo id
-	int PortId;				//�󶨵�PortId
-	int address;				//�豸��ַ
-	int regedian;			//�豸��С��
-	int byteorder;			//�豸�Ĵ����ߵ�λ
-	char DeviceName[100];	//�豸��
+	int PortId;				//绑定的PortId
+	int address;				//设备地址
+	int regedian;			//设备大小端
+	int byteorder;			//设备寄存器高低位
+	char DeviceName[100];	//设备名
 
 	int devcount;
 	VarParam_t uploadvarparam[UploadVarNums];
