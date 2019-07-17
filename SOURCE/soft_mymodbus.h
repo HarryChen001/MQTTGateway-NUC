@@ -22,7 +22,6 @@ private:
 	float modbus_get_float_from_int16(uint16_t buff[]);
 	void modbus_rtu_init();
 	static void modbus_read_thread(modbus* params, struct _Allinfo_t* pAllinfo);
-	static void modbus_read485_thread(modbus* params,struct _Allinfo_t* pallinfotemp);
 	static void modbus_write_thead(modbus* params);
 	std::mutex modbus_mutex;
 };
