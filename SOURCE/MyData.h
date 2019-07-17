@@ -16,9 +16,9 @@ typedef void (rts)(modbus_t*, int);
 #define DeviceNums 10
 #define ThemeCtrlNums 1
 #define ThemeUploadNums 1
-#define AllVarNums 500
+#define AllVarNums 800
 #define VarNumsPeriodDev 200
-#define UploadVarNums 500
+#define UploadVarNums 800
 #define uploadperiod 50
 
 #define RESET   "\033[0m"
@@ -161,6 +161,7 @@ typedef struct _ConnectInfo_t {
 typedef struct _Allinfo_t {
 
 	modbus_t* fdmodbus;
+	bool write_flag;
 	PortInfo_t portinfo;
 
 	DeviceInfo_t deviceinfo[DeviceNums];
