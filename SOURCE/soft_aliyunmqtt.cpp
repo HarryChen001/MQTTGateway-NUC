@@ -100,7 +100,7 @@ int MyAliyunMqtt::publish(char* publishtopic, int Qos, cJSON* json_payload)
 }
 void MyAliyunMqtt::event_handle(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg)
 {
-	printf("msg->event_type : %d\n", msg->event_type);
+//	printf("msg->event_type : %d\n", msg->event_type);
 }
 
 /*
