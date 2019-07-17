@@ -165,25 +165,7 @@ int main(int argc, char* argv[])
 	MySqlite db(argv[1]);
 	db.GetAllInfo();
 	db.~MySqlite();
-/*	for (int i = 0; i < 15; i++)
-	{
-		if (Allinfo[i].portinfo.id == 0)
-			continue;
-		for (int j = 0; j < sizeof(Allinfo[i].deviceinfo)/sizeof(DeviceInfo_t); j++)
-		{
-			if (Allinfo[i].deviceinfo[j].id == 0)
-			{
-				continue;
-			}
-			VarParam_t* temp = Allinfo[i].deviceinfo[j].uploadvarparam;
-			for (int k = 0; k < Allinfo[i].deviceinfo[j].uploadvarcount; k++)
-			{
-				if (temp->id == 0)
-					continue;
-				cout << temp[k].VarName << temp[k].id << endl;
-			}
-		}
-	}*/
+
 	modbus newmodbus;
 	newmodbus.openmainthread();
 
