@@ -139,6 +139,7 @@ int MySqlite::GetAllInfo()
 			PortInfo[j].gpio = -1;
 			break;
 		case 8:
+			PortInfo[j].PortNum = 8;
 			PortInfo[j].gpio = -1;
 			break;
 		case 9:
