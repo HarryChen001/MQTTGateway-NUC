@@ -330,7 +330,7 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
 
 		int alluploadvarcount = 0;
-		for (int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
+		for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 		{
 			if (Allinfo[i].portinfo.id == 0)
 			{
