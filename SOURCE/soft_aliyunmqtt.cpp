@@ -100,7 +100,7 @@ int MyAliyunMqtt::publish(char* publishtopic, int Qos, cJSON* json_payload)
 }
 void MyAliyunMqtt::event_handle(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg)
 {
-//	printf("msg->event_type : %d\n", msg->event_type);
+	//	printf("msg->event_type : %d\n", msg->event_type);
 }
 
 /*
@@ -172,12 +172,14 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 			json_params = cJSON_GetObjectItem(json, "params");
 			if (json_params)
 			{
-				char* varname = json_params->child->string;
-				double value = json_params->child->valuedouble;
-				varinfo.varname = varname;
-				varinfo.value = value;
-				queue_var_write.push(varinfo);
-				//modbus_set(1, value, varname, &buff);
+				cJSON* jsontemp = json_params->child;
+				while (jsontemp != NULL)
+				{
+					varinfo.varname = jsontemp->string;
+					varinfo.value = jsontemp->valuedouble;
+					queue_var_write.push(varinfo);
+					jsontemp = jsontemp->next;
+				}
 			}
 			else if ((json_params = cJSON_GetObjectItem(json, "COM")))
 			{
@@ -248,7 +250,7 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 
 				if (seriallen == 0)
 				{
-					sprintf(payload, "Com%d Timeout",com);
+					sprintf(payload, "Com%d Timeout", com);
 				}
 
 				cJSON_AddStringToObject(response, "Time", tmp);
@@ -351,13 +353,12 @@ int MyAliyunMqtt::MqttMain(void* Params)
 					double value = var[varname];
 					cJSON_AddNumberToObject(params_json, varname.c_str(), value);
 					alluploadvarcount++;
-					if ((alluploadvarcount % uploadperiod) &&( k < Allinfo[i].deviceinfo[j].uploadvarcount - 1))
+					if ((alluploadvarcount % uploadperiod) && (k < Allinfo[i].deviceinfo[j].uploadvarcount - 1))
 					{
 						continue;
 					}
-					char* payload = cJSON_PrintUnformatted(publish_json);
 					point->publish(ThemeUpload[0].CtrlPub, ThemeUpload[0].QosPub, publish_json);
-					cJSON_DeleteItemFromObject(publish_json,"params");
+					cJSON_DeleteItemFromObject(publish_json, "params");
 					cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
 				}
 			}
