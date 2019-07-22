@@ -20,8 +20,6 @@ using std::string;
 using std::queue;
 using std::map;
 
-FILE* fp[5];
-
 void set_coms(int gpio, int on)
 {
 	string str;
