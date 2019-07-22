@@ -27,7 +27,7 @@ int MySqlite::selectfrom(char* tablename, char* format, ...)
 	char dbcmd[200];
 
 	va_list	arg_list;
-	va_start(arg_list, format);
+	va_start(arg_list, format); //һ��Ҫ��...��֮ǰ���Ǹ�����
 	vsprintf(dest, format, arg_list);
 	va_end(arg_list);
 	sprintf(dbcmd, "SELECT %s FROM %s", dest, tablename);
@@ -104,56 +104,43 @@ int MySqlite::GetAllInfo()
 	j = 0;
 	for (query::iterator i = qryPortParam.begin(); i != qryPortParam.end(); ++i)
 	{
-		PortInfo[j].id = (*i).get<int>(0);
-		PortInfo[j].PortId = (*i).get<int>(2);
-		PortInfo[j].PortType = (*i).get<int>(3);
-		PortInfo[j].PortNum = (*i).get<int>(4);
-		switch (PortInfo[j].PortNum)
+		int portnums = (*i).get<int>(4);
+		int gpio = -1;
+		switch (portnums)
 		{
 		case 1:
-			PortInfo[j].PortNum = 10;
-			PortInfo[j].gpio = 0x2e;
+			portnums = 10;
+			gpio = 0x2e;
 			break;
 		case 2:
-			PortInfo[j].PortNum = 3;
-			PortInfo[j].gpio = 0x67;
+			portnums = 3;
+			gpio = 0x67;
 			break;
 		case 3:
-			PortInfo[j].PortNum = 9;
-			PortInfo[j].gpio = 0x66;
+			portnums = 9;
+			gpio = 0x66;
 			break;
 		case 4:
-			PortInfo[j].PortNum = 1;
-			PortInfo[j].gpio = 0x84;
+			portnums = 1;
+			gpio = 0x84;
 			break;
 		case 5:
-			PortInfo[j].PortNum = 6;
-			PortInfo[j].gpio = 0x21;
+			portnums = 6;
+			gpio = 0x21;
 			break;
 		case 6:
-			PortInfo[j].PortNum = 7;
-			PortInfo[j].gpio = -1;
+			portnums = 7;
 			break;
 		case 7:
-			PortInfo[j].PortNum = 2;
-			PortInfo[j].gpio = -1;
+			portnums = 2;
 			break;
 		case 8:
-			PortInfo[j].PortNum = 8;
-			PortInfo[j].gpio = -1;
 			break;
 		case 9:
-			PortInfo[j].PortNum = 4;
-			PortInfo[j].gpio = -1;
+			portnums = 4;
 			break;
 		}
-		PortInfo[j].baud = (*i).get<int>(5);
-		PortInfo[j].DataBits = (*i).get<int>(7);
-		PortInfo[j].StopBits = (*i).get<int>(8);
-		PortInfo[j].DelayTime = (*i).get<int>(9);
-		strcpy(PortInfo[j].Parity, (*i).get<const char*>(6));
 
-		int portnums = PortInfo[j].PortNum;
 		Allinfo[portnums].portinfo.id = (*i).get<int>(0);
 		Allinfo[portnums].portinfo.PortId = (*i).get<int>(2);
 		Allinfo[portnums].portinfo.PortType = (*i).get<int>(3);
@@ -163,7 +150,6 @@ int MySqlite::GetAllInfo()
 		Allinfo[portnums].portinfo.DataBits = (*i).get<int>(7);
 		Allinfo[portnums].portinfo.StopBits = (*i).get<int>(8);
 		Allinfo[portnums].portinfo.DelayTime = (*i).get<int>(9);
-		Allinfo[portnums].portinfo.gpio = PortInfo[j].gpio;
 
 		j++;
 	}
@@ -235,7 +221,7 @@ int MySqlite::GetAllInfo()
 		}
 		for (int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 		{
-			if (devid = Allinfo[allinfosubscript].deviceinfo[i].id)
+			if (devid == Allinfo[allinfosubscript].deviceinfo[i].id)
 			{
 				devsubscript = i;
 				break;
@@ -278,7 +264,7 @@ int MySqlite::GetAllInfo()
 			}
 			for (int j = 0; j < Allinfo[i].devcount; j++)
 			{
-				if (Allinfo[i].deviceinfo[j].id == 0)
+				if (Allinfo[i].deviceinfo[j].id != devid)
 				{
 					continue;
 				}
