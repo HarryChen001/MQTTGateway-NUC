@@ -59,12 +59,11 @@ int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
 
 	res = IOT_MQTT_Subscribe_Sync(pclient, subscribetopic, iotx_qos, message_arrive, this, 1000);
 	if (res < 0) {
-		printf("subscribe failed\n");
-		exit(0);
+		cout << BOLDRED << "Subscribe Topic fail!" << RESET << endl;
 	}
 	else
 	{
-		printf("subscribe success,topic is:[%s]\n", subscribetopic);
+		cout << BOLDYELLOW << "Subscribe Topic SUCCESS!" << RESET << endl;
 	}
 	return 0;
 }
@@ -287,17 +286,19 @@ int MyAliyunMqtt::openrecparsethread()
 int MyAliyunMqtt::MqttMain(void* Params)
 {
 #ifndef gcc
-	for (int i = 0; i < PortInfo[0].portcount; i++)
+	for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 	{
-		int gpio = PortInfo[i].gpio;
+		if (Allinfo[i].portinfo.PortNum == 0 || Allinfo[i].portinfo.gpio == -1)
+			continue;
+		int gpio = Allinfo[i].portinfo.gpio;
 		if (gpio != -1)
 		{
 			char buff[100];
-			sprintf(buff, "%s%d%s", "echo ", PortInfo[i].gpio, " > /sys/class/gpio/export");
+			sprintf(buff, "%s%d%s", "echo ", gpio, " > /sys/class/gpio/export");
 			system(buff);
-			sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", PortInfo[i].gpio, "/direction");
+			sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", gpio, "/direction");
 			system(buff);
-			sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", PortInfo[i].gpio, "/value");
+			sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", gpio, "/value");
 			system(buff);
 		}
 	}
@@ -313,15 +314,16 @@ int MyAliyunMqtt::MqttMain(void* Params)
 
 	point->openintervalthread();		//create MQTT interval thread
 	point->openrecparsethread();		//create thread----parse the receive data
+	time_t nowtime;
+	cJSON* publish_json;
+	cJSON* params_json;
 	while (1)
 	{
-		time_t nowtime;
 		nowtime = time(NULL); //get now time
 		char tmp[64];
 		strftime(tmp, sizeof(tmp), "%Y%m%d%H%M%S", localtime(&nowtime));
 
-		cJSON* publish_json;
-		cJSON* params_json;
+
 
 		publish_json = cJSON_CreateObject();
 
@@ -330,6 +332,17 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
 
 		int alluploadvarcount = 0;
+		for (int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
+		{
+			if (Allinfo[i].portinfo.id == 0)
+				continue;
+			for (int j = 0; j < Allinfo[i].devcount; j++)
+			{
+				alluploadvarcount += Allinfo[i].deviceinfo->uploadvarcount;
+			}
+		}
+
+		int alluploadvarcount_temp = 0;
 		for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 		{
 			if (Allinfo[i].portinfo.id == 0)
@@ -352,9 +365,11 @@ int MyAliyunMqtt::MqttMain(void* Params)
 					std::string varname = uploadvartemp->VarName;
 					double value = var[varname];
 					cJSON_AddNumberToObject(params_json, varname.c_str(), value);
-					alluploadvarcount++;
-					if ((alluploadvarcount % uploadperiod) && (k < Allinfo[i].deviceinfo[j].uploadvarcount - 1))
+					//检查变量数量是否到达设定的数量或者该设备下已无可读变量，是则上发数据到指定主题
+					alluploadvarcount_temp++;
+					if ((alluploadvarcount_temp % uploadperiod) && k < Allinfo[i].deviceinfo[j].uploadvarcount - 1)
 					{
+					//	if(alluploadvarcount_temp != alluploadvarcount -1)
 						continue;
 					}
 					point->publish(ThemeUpload[0].CtrlPub, ThemeUpload[0].QosPub, publish_json);

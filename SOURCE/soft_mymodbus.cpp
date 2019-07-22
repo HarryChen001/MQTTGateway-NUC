@@ -204,11 +204,10 @@ void modbus::modbus_rtu_init()
 }
 void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 {
+	modbus_t* modbus = pallinfotemp->fdmodbus;
+	uint16_t buff[10];
 	while (1)
 	{
-		modbus_t* modbus = pallinfotemp->fdmodbus;
-		uint16_t buff[10];
-
 		for (int j = 0; j < pallinfotemp->devcount; j++)
 		{
 			if (pallinfotemp->deviceinfo[j].id == 0)
@@ -351,8 +350,8 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 					}
 				}
 			}
-			sleep(1);
 		}
+		sleep(1);
 	}
 }
 void modbus::modbus_write_thead(modbus* params)
@@ -459,6 +458,7 @@ void modbus::modbus_write_thead(modbus* params)
 				}
 			}
 		}
+		sleep(1);
 	}
 }
 void modbus::openmainthread()
