@@ -22,54 +22,54 @@ using std::map;
 
 FILE* fp[5];
 
-void set_coms(int gpio,int on)
+void set_coms(int gpio, int on)
 {
 	string str;
-	if(gpio == 1)
+	if (gpio == 1)
 		gpio = 46;
-	else if(gpio == 2)
+	else if (gpio == 2)
 		gpio = 103;
-	else if(gpio == 3)
+	else if (gpio == 3)
 		gpio = 102;
-	else if(gpio == 4)
+	else if (gpio == 4)
 		gpio = 132;
-	else if(gpio == 5)
+	else if (gpio == 5)
 		gpio = 33;
 
-	sprintf((char*)str.c_str(),"/sys/class/gpio/gpio%d/value",gpio);
-	FILE* fp = fopen(str.c_str(),"rb+");
-	if(fp == NULL)
+	sprintf((char*)str.c_str(), "/sys/class/gpio/gpio%d/value", gpio);
+	FILE* fp = fopen(str.c_str(), "rb+");
+	if (fp == NULL)
 	{
 		cout << "open fail:" << gpio << endl;
 		return;
 	}
-	if(on)
-		fprintf(fp,"1");
+	if (on)
+		fprintf(fp, "1");
 	else
-		fprintf(fp,"0");
+		fprintf(fp, "0");
 	fflush(fp);
 	fclose(fp);
 }
 
 void setrts_com1(modbus_t* ctx, int on)
 {
-	set_coms(1,on);
+	set_coms(1, on);
 }
 void setrts_com2(modbus_t* ctx, int on)
 {
-	set_coms(2,on);
+	set_coms(2, on);
 }
 void setrts_com3(modbus_t* ctx, int on)
 {
-	set_coms(3,on);
+	set_coms(3, on);
 }
 void setrts_com4(modbus_t* ctx, int on)
 {
-	set_coms(4,on);
+	set_coms(4, on);
 }
 void setrts_com5(modbus_t* ctx, int on)
 {
-	set_coms(5,on);
+	set_coms(5, on);
 }
 void ByteChange(uint16_t* buff, int nums, int endian, int byteorder)
 {
@@ -302,7 +302,7 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 					count++;
 					if (count >= 7)
 					{
-						cout << BOLDRED << vartemp->VarName <<  "read modbus timeout!" << endl << RESET;
+						cout << BOLDRED << vartemp->VarName << "read modbus timeout!" << endl << RESET;
 						break;
 					}
 				}
@@ -361,7 +361,7 @@ void modbus::modbus_write_thead(modbus* params)
 {
 	while (1)
 	{
-		if(!queue_var_write.empty())
+		if (!queue_var_write.empty())
 			cout << endl;
 		while (!queue_var_write.empty())
 		{
@@ -408,12 +408,12 @@ void modbus::modbus_write_thead(modbus* params)
 							{
 								MODBUS_SET_INT64_TO_INT16(buff, 0, (int64_t)rec_value);
 								uint16_t* tempbuff;
-								if (str_datatypetemp == "uint16"||str_datatypetemp == "int16")
+								if (str_datatypetemp == "uint16" || str_datatypetemp == "int16")
 								{
 									regnums = 1;
 									*tempbuff = (uint16_t)rec_value;
 								}
-								else if (str_datatypetemp == "uint32"||str_datatypetemp == "int32")
+								else if (str_datatypetemp == "uint32" || str_datatypetemp == "int32")
 								{
 									regnums = 2;
 									ByteChange(buff, regnums, regendian, regbyteorder);
@@ -421,7 +421,7 @@ void modbus::modbus_write_thead(modbus* params)
 									buff[1] = buff[2];
 									tempbuff = buff;
 								}
-								else if (str_datatypetemp == "uint64" || str_datatypetemp == "int64" )
+								else if (str_datatypetemp == "uint64" || str_datatypetemp == "int64")
 								{
 									regnums = 4;
 									ByteChange(buff, regnums, regendian, regbyteorder);
@@ -434,7 +434,7 @@ void modbus::modbus_write_thead(modbus* params)
 									ByteChange(buff, regnums, regendian, regbyteorder);
 									tempbuff = buff;
 								}
-								else if(str_datatypetemp == "double")
+								else if (str_datatypetemp == "double")
 								{
 									regnums = 4;
 									params->modbus_set_double_to_int16(buff, rec_value);
@@ -447,7 +447,7 @@ void modbus::modbus_write_thead(modbus* params)
 									rc = modbus_write_bit(modbus, regadr, rec_value);
 								}
 								else
-									cout << "write :" <<  modbus_write_registers(modbus, regadr, regnums, tempbuff) << endl;
+									cout << "write :" << modbus_write_registers(modbus, regadr, regnums, tempbuff) << endl;
 								count++;
 								if (count >= 5)
 								{
@@ -471,16 +471,16 @@ void modbus::openmainthread()
 		if (Allinfo[i].portinfo.id != 0)
 		{
 			int varcount = 0;
-			for(int j = 0; j < Allinfo[i].devcount;j++)
+			for (int j = 0; j < Allinfo[i].devcount; j++)
 			{
 				varcount += Allinfo[i].deviceinfo[j].uploadvarcount;
 			}
-			if(varcount == 0)
+			if (varcount == 0)
 				continue;
 			std::thread(modbus_read_thread, this, &Allinfo[i]).detach();
 		}
 	}
-	std::thread(modbus_write_thead,this).detach();
+	std::thread(modbus_write_thead, this).detach();
 }
 
 void modbus::modbus_set_double_to_int16(uint16_t buff[], double input)
