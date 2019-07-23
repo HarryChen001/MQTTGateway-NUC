@@ -61,47 +61,43 @@ int MySqlite::GetAllInfo()
 	query qryThemeCtrl(db, "SELECT * FROM ThemeCtrl");
 	query qryThemeUpload(db, "SELECT * FROM ThemeUpload");
 	query qryThemeUploadList(db, "SELECT * FROM ThemeUploadList");
-//	qryDevParam.finish();
-	j = 0;
+
 	for (query::iterator i = qryMqttParam.begin(); i != qryMqttParam.end(); ++i)
 	{
-		MqttInfo[j].id = (*i).get<int>(0);
-		MqttInfo[j].Session = (*i).get<int>(1);
-		MqttInfo[j].Enable = (*i).get<int>(2);
-		MqttInfo[j].KeepAlive = (*i).get<int>(3);
-		MqttInfo[j].ServerPort = (*i).get<int>(4);
-		strcpy(MqttInfo[j].ClientId, (*i).get<const char*>(5));
-		strcpy(MqttInfo[j].UserName, (*i).get<const char*>(8));
-		strcpy(MqttInfo[j].Password, (*i).get<const char*>(9));
-		MqttInfo[j].EnableDef = (*i).get<int>(11);
-		strcpy(MqttInfo[j].TopicDef, (*i).get<const char*>(12));
-		MqttInfo[j].QosDef = (*i).get<int>(13);
-		MqttInfo[j].EnableAlarm = (*i).get<int>(14);
-		strcpy(MqttInfo[j].TopicAlarm, (*i).get<const char*>(15));
-		MqttInfo[j].QosAlarm = (*i).get<int>(16);
-		strcpy(MqttInfo[j].ServerLink, (*i).get<const char*>(17));
-		strcpy(MqttInfo[j].MqttName, (*i).get<const char*>(18));
-		j++;
+		int* count = &MqttInfo[0].MqttCount;
+		MqttInfo[*count].id = (*i).get<int>(0);
+		MqttInfo[*count].Session = (*i).get<int>(1);
+		MqttInfo[*count].Enable = (*i).get<int>(2);
+		MqttInfo[*count].KeepAlive = (*i).get<int>(3);
+		MqttInfo[*count].ServerPort = (*i).get<int>(4);
+		strcpy(MqttInfo[*count].ClientId, (*i).get<const char*>(5));
+		strcpy(MqttInfo[*count].UserName, (*i).get<const char*>(8));
+		strcpy(MqttInfo[*count].Password, (*i).get<const char*>(9));
+		MqttInfo[*count].EnableDef = (*i).get<int>(11);
+		strcpy(MqttInfo[*count].TopicDef, (*i).get<const char*>(12));
+		MqttInfo[*count].QosDef = (*i).get<int>(13);
+		MqttInfo[*count].EnableAlarm = (*i).get<int>(14);
+		strcpy(MqttInfo[*count].TopicAlarm, (*i).get<const char*>(15));
+		MqttInfo[*count].QosAlarm = (*i).get<int>(16);
+		strcpy(MqttInfo[*count].ServerLink, (*i).get<const char*>(17));
+		strcpy(MqttInfo[*count].MqttName, (*i).get<const char*>(18));
+		(*count)++;
 	}
-	MqttInfo[0].MqttCount = j--;
-	j = 0;
-	qryMqttParam.finish();
 	for (query::iterator i = qryThemeCtrl.begin(); i != qryThemeCtrl.end(); ++i)
 	{
-		ThemeCtrl[j].id = (*i).get<int>(0);
-		strcpy(ThemeCtrl[j].proto, (*i).get<const char*>(1));
-		ThemeCtrl[j].Enable = (*i).get<int>(2);
-		ThemeCtrl[j].MqttId = (*i).get<int>(3);
-		ThemeCtrl[j].QosPub = (*i).get<int>(4);
-		ThemeCtrl[j].QosSub = (*i).get<int>(5);
-		strcpy(ThemeCtrl[j].CtrlName, (*i).get<const char*>(6));
-		strcpy(ThemeCtrl[j].CtrlPub, (*i).get<const char*>(7));
-		strcpy(ThemeCtrl[j].CtrlSub, (*i).get<const char*>(8));
-		ThemeCtrl[j].uartID = (*i).get<int>(9);
-		j++;
+		int* count = &ThemeCtrl[0].Ctrlcount;
+		ThemeCtrl[*count].id = (*i).get<int>(0);
+		strcpy(ThemeCtrl[*count].proto, (*i).get<const char*>(1));
+		ThemeCtrl[*count].Enable = (*i).get<int>(2);
+		ThemeCtrl[*count].MqttId = (*i).get<int>(3);
+		ThemeCtrl[*count].QosPub = (*i).get<int>(4);
+		ThemeCtrl[*count].QosSub = (*i).get<int>(5);
+		strcpy(ThemeCtrl[*count].CtrlName, (*i).get<const char*>(6));
+		strcpy(ThemeCtrl[*count].CtrlPub, (*i).get<const char*>(7));
+		strcpy(ThemeCtrl[*count].CtrlSub, (*i).get<const char*>(8));
+		ThemeCtrl[*count].uartID = (*i).get<int>(9);
+		(*count)++;
 	}
-	qryThemeCtrl.finish();
-	j = 0;
 	for (query::iterator i = qryPortParam.begin(); i != qryPortParam.end(); ++i)
 	{
 		int portnums = (*i).get<int>(4);
@@ -146,17 +142,12 @@ int MySqlite::GetAllInfo()
 		Allinfo[portnums].portinfo.PortType = (*i).get<int>(3);
 		Allinfo[portnums].portinfo.PortNum = portnums;
 		Allinfo[portnums].portinfo.baud = (*i).get<int>(5);
-		strcpy(Allinfo[portnums].portinfo.Parity , (*i).get<const char*>(6));
+		strcpy(Allinfo[portnums].portinfo.Parity, (*i).get<const char*>(6));
 		Allinfo[portnums].portinfo.DataBits = (*i).get<int>(7);
 		Allinfo[portnums].portinfo.StopBits = (*i).get<int>(8);
 		Allinfo[portnums].portinfo.DelayTime = (*i).get<int>(9);
 		Allinfo[portnums].portinfo.gpio = gpio;
-
-		j++;
 	}
-	PortInfo[0].portcount = j--;
-	qryPortParam.finish();
-	j = 0;
 	for (query::iterator i = qryDevParam.begin(); i != qryDevParam.end(); ++i)
 	{
 		int portid = (*i).get<int>(4);
@@ -176,9 +167,7 @@ int MySqlite::GetAllInfo()
 		Allinfo[portnums].deviceinfo[Allinfo[portnums].devcount].byteorder = (*i).get<int>(6);
 
 		Allinfo[portnums].devcount++;
-		j++;
 	}
-	qryDevParam.finish();
 	j = 0;
 	for (query::iterator i = qryThemeUpload.begin(); i != qryThemeUpload.end(); ++i)
 	{
@@ -193,8 +182,6 @@ int MySqlite::GetAllInfo()
 		strcpy(ThemeUpload[j].Proto, (*i).get<const char*>(8));
 		j++;
 	}
-	qryThemeUpload.finish();
-	j = 0;
 	query qryVarParam(db, "SELECT * FROM VarParam");
 	for (query::iterator i = qryVarParam.begin(); i != qryVarParam.end(); ++i)
 	{
@@ -245,7 +232,6 @@ int MySqlite::GetAllInfo()
 
 		(*allvarcount)++;
 	}
-	qryVarParam.finish();
 	for (query::iterator i = qryThemeUploadList.begin(); i != qryThemeUploadList.end(); ++i)
 	{
 		int id = (*i).get<int>(0);
@@ -288,64 +274,12 @@ int MySqlite::GetAllInfo()
 			}
 		}
 	}
-/*	for (int i = 0; i < sizeof(ThemeUploadList) / sizeof(ThemeUploadList[0]); i++)
-	{
-		if (ThemeUploadList[i].id == 0)
-			continue;
-		int varid = ThemeUploadList[i].VarId;
-		int varsubscript = -1;
-		for (int i = 0; i < sizeof(VarParam) / sizeof(VarParam_t); i++)
-		{
-			if (varid == VarParam[i].id)
-			{
-				varsubscript = i;
-				break;
-			}
-		}
-
-		int portid = VarParam[varsubscript].PortId;
-		int devid = VarParam[varsubscript].DevId;
-
-		int allinfosubscript = -1;
-		int devsubscript = -1;
-//		int varsubscript = -1;
-		for (int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
-		{
-			if (portid == Allinfo[i].portinfo.PortId)
-			{
-				allinfosubscript = i;
-				break;
-			}
-		}
-		for (int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
-		{
-			if (devid = Allinfo[allinfosubscript].deviceinfo[i].id)
-			{
-				devsubscript = i;
-				break;
-			}
-		}
-		for (int i = 0; i < Allinfo[allinfosubscript].deviceinfo[devsubscript].allvarcount; i++)
-		{
-			if (varid == Allinfo[allinfosubscript].deviceinfo[devsubscript].allvarparams[i].id)
-			{
-				varsubscript = i;
-				break;
-			}
-		}
-		int* varcount = &Allinfo[allinfosubscript].deviceinfo[devsubscript].uploadvarcount;
-		VarParam_t* varparamtemp = &Allinfo[allinfosubscript].deviceinfo[devsubscript].uploadvarparam[*varcount];
-
-		varparamtemp->id = VarParam[varsubscript].id;
-		varparamtemp->DecimalsBit = VarParam[varsubscript].DecimalsBit;
-		varparamtemp->DevId = VarParam[varsubscript].DevId;
-		varparamtemp->modules = VarParam[varsubscript].modules;
-		varparamtemp->RegAdr = VarParam[varsubscript].RegAdr;
-		varparamtemp->DataType = VarParam[varsubscript].DataType;
-		varparamtemp->RegType = VarParam[varsubscript].RegType;
-		varparamtemp->VarName = VarParam[varsubscript].VarName;
-		(*varcount)++;
-	}*/
+	qryDevParam.finish();
+	qryMqttParam.finish();
+	qryPortParam.finish();
+	qryThemeCtrl.finish();
+	qryThemeUpload.finish();
+	qryThemeUploadList.finish();
 }
 int MySqlite::GetCountFromTable(char* tablename)
 {
