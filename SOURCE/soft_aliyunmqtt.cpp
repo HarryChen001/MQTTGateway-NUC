@@ -187,7 +187,8 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				char dest[1024];
 				char readbuff[1024];
 #ifndef gcc
-				int gpio = PortInfo[getportinfosubscript(PortInfo, com)].gpio;
+				int gpio = (com == 1) ? 46 : (com == 2) ? 103 : (com == 3) ? 102 : (com == 4) ? 132 : (com == 5) ? 32 : -1;
+				com = (com == 1) ? 10 : (com == 2) ? 3 : (com == 3) ? 9 : (com == 4) ? 1 : (com == 5) ? 6 : -1;
 				if (gpio != -1)
 				{
 					char buff[100];
@@ -195,7 +196,7 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 					system(buff);
 					sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", gpio, "/direction");
 					system(buff);
-					sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", gpio, "/value");
+					sprintf(buff, "echo 1 > /sys/class/gpio/gpio%d/value", gpio);
 					system(buff);
 				}
 #endif
@@ -317,13 +318,11 @@ int MyAliyunMqtt::MqttMain(void* Params)
 	time_t nowtime;
 	cJSON* publish_json;
 	cJSON* params_json;
+	char tmp[64];
 	while (1)
 	{
 		nowtime = time(NULL); //get now time
-		char tmp[64];
 		strftime(tmp, sizeof(tmp), "%Y%m%d%H%M%S", localtime(&nowtime));
-
-
 
 		publish_json = cJSON_CreateObject();
 
@@ -331,7 +330,7 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		cJSON_AddStringToObject(publish_json, "method", "method.event.property.post");
 		cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
 
-		int alluploadvarcount = 0;
+		int alluploadvarcount = 0;	//记录所有的变量数量
 		for (int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 		{
 			if (Allinfo[i].portinfo.id == 0)
@@ -342,7 +341,7 @@ int MyAliyunMqtt::MqttMain(void* Params)
 			}
 		}
 
-		int alluploadvarcount_temp = 0;
+		int alluploadvarcount_temp = 0;	//记录已经上传的变量的数量
 		for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 		{
 			if (Allinfo[i].portinfo.id == 0)
@@ -367,9 +366,10 @@ int MyAliyunMqtt::MqttMain(void* Params)
 					cJSON_AddNumberToObject(params_json, varname.c_str(), value);
 					//检查变量数量是否到达设定的数量或者该设备下已无可读变量，是则上发数据到指定主题
 					alluploadvarcount_temp++;
-					if ((alluploadvarcount_temp % uploadperiod) && k < Allinfo[i].deviceinfo[j].uploadvarcount - 1)
+					if ((alluploadvarcount_temp % uploadperiod) \
+						&& alluploadvarcount_temp != alluploadvarcount\
+						)//&& (k != Allinfo[i].deviceinfo[j].uploadvarcount - 1))
 					{
-					//	if(alluploadvarcount_temp != alluploadvarcount -1)
 						continue;
 					}
 					point->publish(ThemeUpload[0].CtrlPub, ThemeUpload[0].QosPub, publish_json);
