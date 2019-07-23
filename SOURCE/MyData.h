@@ -75,6 +75,7 @@ typedef struct _ThemeCtrl_t {
 	char CtrlPub[100];		//发布的主题
 	char CtrlSub[100];		//订阅的主题
 	int uartID;
+	int Ctrlcount;
 }ThemeCtrl_t;
 
 //上传主题相关参数
@@ -182,11 +183,10 @@ typedef struct _Varinfo_t {
 	double value;
 }Varinfo_t;
 extern ConnectInfo_t MqttInfo[MqttConnect];
-extern PortInfo_t PortInfo[SerialNums];
 extern ThemeCtrl_t ThemeCtrl[ThemeCtrlNums];
 extern ThemeUpload_t ThemeUpload[ThemeUploadNums];
 
-extern Allinfo_t Allinfo[15];
+extern Allinfo_t Allinfo[20];
 extern std::map<std::string, double>var;	//store the data from modbus(read from modbus);
 extern std::queue<Varinfo_t>queue_var_write;	//store the queue to modbus(write to modbus);
 extern Varinfo_t varinfo;					//store the info to queue(write to modbus);

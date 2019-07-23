@@ -29,14 +29,12 @@ using std::string;
 
 ConnectInfo_t MqttInfo[MqttConnect];
 DeviceInfo_t DevInfo[DeviceNums];
-PortInfo_t PortInfo[SerialNums];
 ThemeCtrl_t ThemeCtrl[ThemeCtrlNums];
 ThemeUpload_t ThemeUpload[ThemeUploadNums];
-ThemeUploadList_t ThemeUploadList[UploadVarNums];
 VarParam_t VarParam[AllVarNums];
 
 enumdatatype datatype;
-Allinfo_t Allinfo[15];
+Allinfo_t Allinfo[20];
 Varinfo_t varinfo;
 
 std::map<std::string, double>var;
