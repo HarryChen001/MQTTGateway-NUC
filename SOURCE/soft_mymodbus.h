@@ -24,6 +24,8 @@ private:
 	static void modbus_read_thread(modbus* params, struct _Allinfo_t* pAllinfo);
 	static void modbus_write_thead(modbus* params);
 	std::mutex modbus_mutex;
+	std::thread modbus_read_threadid[20];
+	std::thread modbus_write_threadid;
 };
 
 #endif // _SOFT_MYMODBUS_H_

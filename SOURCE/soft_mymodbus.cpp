@@ -23,7 +23,6 @@ using std::map;
 
 void set_coms(int gpio, int on)
 {
-	string str;
 	if (gpio == 1)
 		gpio = 46;
 	else if (gpio == 2)
@@ -80,30 +79,6 @@ void ByteChange(uint16_t* buff, int nums, int endian, int byteorder)
 		}
 	}
 }
-void modbus_set_double_to_int16(uint16_t buff[], double input)
-{
-	doubleunion doubletype;
-	doubletype.doubletype = input;
-	MODBUS_SET_INT64_TO_INT16(buff, 0, doubletype.int64type);
-}
-double modbus_get_double_from_int16(uint16_t buff[])
-{
-	doubleunion doubletype;
-	doubletype.int64type = MODBUS_GET_INT64_FROM_INT16(buff, 0);
-	return doubletype.doubletype;
-}
-void modbus_set_float_to_int16(uint16_t buff[], float input)
-{
-	floatunion floattype;
-	floattype.floattype = input;
-	MODBUS_SET_INT32_TO_INT16(buff, 0, floattype.int32type);
-}
-float modbus_get_float_from_int16(uint16_t buff[])
-{
-	floatunion floattype;
-	floattype.int32type = MODBUS_GET_INT32_FROM_INT16(buff, 0);
-	return floattype.floattype;
-}
 modbus::modbus()
 {
 }
@@ -123,7 +98,7 @@ void modbus::modbus_rtu_init()
 		gpiooutput(gpio);
 	}
 #endif
-	for (int i = 0; i < 15; i++)
+	for (unsigned int i = 0; i < sizeof(Allinfo)/sizeof(Allinfo_t); i++)
 	{
 		if (Allinfo[i].portinfo.PortNum == 0)
 			continue;
@@ -134,7 +109,6 @@ void modbus::modbus_rtu_init()
 		int databits = Allinfo[i].portinfo.DataBits;
 		int stopbits = Allinfo[i].portinfo.StopBits;
 		char parity = Allinfo[i].portinfo.Parity[0];
-		string serial;
 #ifdef gcc //ubuntu debug
 		if (portnums == 10)
 			portnums = 0;
@@ -155,8 +129,8 @@ void modbus::modbus_rtu_init()
 		else if (portnums == 4)
 			portnums = 8;
 #endif
-		sprintf((char*)serial.c_str(), "%s%d", "/dev/ttyS", portnums);
 
+		string serial = "/dev/ttyS" + std::to_string(portnums);
 		Allinfo[i].fdmodbus = modbus_new_rtu(serial.c_str(), baud, parity, databits, stopbits);
 		modbus_set_debug(Allinfo[i].fdmodbus, modbus_debug);
 #ifndef gcc
@@ -309,45 +283,42 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 				if (*datatypetemp != uint16 && *datatypetemp != int16 && *datatypetemp != bool_type)
 					ByteChange(buff, regnums, regendian, regbyteorder);
 
-				if (rc != -1)
+				string varnametemp = vartemp->VarName;
+				if (*datatypetemp == uint16)
 				{
-					string varnametemp = vartemp->VarName;
-					if (*datatypetemp == uint16)
-					{
-						var[varnametemp] = (uint16_t)buff[0];
-					}
-					else if (*datatypetemp == uint32)
-					{
-						var[varnametemp] = (uint32_t)MODBUS_GET_INT32_FROM_INT16(buff, 0);
-					}
-					else if (*datatypetemp == uint64)
-					{
-						var[varnametemp] = (uint64_t)MODBUS_GET_INT64_FROM_INT16(buff, 0);
-					}
-					else if (*datatypetemp == int16)
-					{
-						var[varnametemp] = (int16_t)buff[0];
-					}
-					else if (*datatypetemp == int32)
-					{
-						var[varnametemp] = (int32_t)MODBUS_GET_INT32_FROM_INT16(buff, 0);
-					}
-					else if (*datatypetemp == int64)
-					{
-						var[varnametemp] = (int64_t)MODBUS_GET_INT64_FROM_INT16(buff, 0);
-					}
-					else if (*datatypetemp == float_type)
-					{
-						var[varnametemp] = params->modbus_get_float_from_int16(buff);
-					}
-					else if (*datatypetemp == double_type)
-					{
-						var[varnametemp] = params->modbus_get_double_from_int16(buff);
-					}
-					else if (*datatypetemp == bool_type)
-					{
-						var[varnametemp] = (uint16_t)buff[0];
-					}
+					var[varnametemp] = (uint16_t)buff[0];
+				}
+				else if (*datatypetemp == uint32)
+				{
+					var[varnametemp] = (uint32_t)MODBUS_GET_INT32_FROM_INT16(buff, 0);
+				}
+				else if (*datatypetemp == uint64)
+				{
+					var[varnametemp] = (uint64_t)MODBUS_GET_INT64_FROM_INT16(buff, 0);
+				}
+				else if (*datatypetemp == int16)
+				{
+					var[varnametemp] = (int16_t)buff[0];
+				}
+				else if (*datatypetemp == int32)
+				{
+					var[varnametemp] = (int32_t)MODBUS_GET_INT32_FROM_INT16(buff, 0);
+				}
+				else if (*datatypetemp == int64)
+				{
+					var[varnametemp] = (int64_t)MODBUS_GET_INT64_FROM_INT16(buff, 0);
+				}
+				else if (*datatypetemp == float_type)
+				{
+					var[varnametemp] = params->modbus_get_float_from_int16(buff);
+				}
+				else if (*datatypetemp == double_type)
+				{
+					var[varnametemp] = params->modbus_get_double_from_int16(buff);
+				}
+				else if (*datatypetemp == bool_type)
+				{
+					var[varnametemp] = (uint16_t)buff[0];
 				}
 			}
 		}
@@ -475,10 +446,10 @@ void modbus::openmainthread()
 			}
 			if (varcount == 0)
 				continue;
-			std::thread(modbus_read_thread, this, &Allinfo[i]).detach();
+			modbus_read_threadid[i] = std::thread(modbus_read_thread, this, &Allinfo[i]);
 		}
 	}
-	std::thread(modbus_write_thead, this).detach();
+	modbus_write_threadid = std::thread(modbus_write_thead, this);
 }
 
 void modbus::modbus_set_double_to_int16(uint16_t buff[], double input)
