@@ -10,6 +10,7 @@
 #include <map>
 #include <thread>
 
+#include "soft_myfunction.h"
 #include "MyData.h"
 
 #define modbus_debug 0
@@ -34,19 +35,7 @@ void set_coms(int gpio, int on)
 	else if (gpio == 5)
 		gpio = 33;
 
-	sprintf((char*)str.c_str(), "/sys/class/gpio/gpio%d/value", gpio);
-	FILE* fp = fopen(str.c_str(), "rb+");
-	if (fp == NULL)
-	{
-		cout << "open fail:" << gpio << endl;
-		return;
-	}
-	if (on)
-		fprintf(fp, "1");
-	else
-		fprintf(fp, "0");
-	fflush(fp);
-	fclose(fp);
+	gpiovalue(gpio,on);
 }
 
 void setrts_com1(modbus_t* ctx, int on)
@@ -123,6 +112,17 @@ modbus::~modbus()
 }
 void modbus::modbus_rtu_init()
 {
+#ifndef gcc
+	for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
+	{
+		if (Allinfo[i].portinfo.PortNum == 0 || Allinfo[i].portinfo.gpio == -1)
+			continue;
+		int gpio = Allinfo[i].portinfo.gpio;
+
+		gpioexport(gpio);
+		gpiooutput(gpio);
+	}
+#endif
 	for (int i = 0; i < 15; i++)
 	{
 		if (Allinfo[i].portinfo.PortNum == 0)
