@@ -92,7 +92,7 @@ int MyAliyunMqtt::publish(char* publishtopic, int Qos, cJSON* json_payload)
 		free(publish_payload);
 		return -1;
 	}
-	cout << BOLDYELLOW << "SUCCESS!" << endl << endl;
+	cout << BOLDYELLOW << "SUCCESS!" << RESET << endl << endl;
 	cout << BOLDGREEN << "Paylod is -> " << publish_payload << RESET << endl;
 	free(publish_payload);
 	return 0;
@@ -159,7 +159,6 @@ int MyAliyunMqtt::MqttInterval(void* Params)
 int MyAliyunMqtt::MqttRecParse(void* Params)
 {
 	MyAliyunMqtt* point = (MyAliyunMqtt*)Params;
-	double buff;
 	Serial s;
 	while (1)
 	{
@@ -188,16 +187,12 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				char readbuff[1024];
 #ifndef gcc
 				int gpio = (com == 1) ? 46 : (com == 2) ? 103 : (com == 3) ? 102 : (com == 4) ? 132 : (com == 5) ? 32 : -1;
-				com = (com == 1) ? 10 : (com == 2) ? 3 : (com == 3) ? 9 : (com == 4) ? 1 : (com == 5) ? 6 : -1;
+				com = (com == 1) ? 10 : (com == 2) ? 3 : (com == 3) ? 9 : (com == 4) ? 1 : (com == 5) ? 6:com;
 				if (gpio != -1)
 				{
-					char buff[100];
-					sprintf(buff, "%s%d%s", "echo ", gpio, " > /sys/class/gpio/export");
-					system(buff);
-					sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", gpio, "/direction");
-					system(buff);
-					sprintf(buff, "echo 1 > /sys/class/gpio/gpio%d/value", gpio);
-					system(buff);
+					gpioexport(gpio);
+					gpiooutput(gpio);
+					gpiovalue(gpio,1);
 				}
 #endif
 				cJSON* json_payload;
@@ -217,9 +212,7 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 #ifndef gcc
 				if (gpio != -1)
 				{
-					char buff[100];
-					sprintf(buff, "%s%d%s", "echo 0 > /sys/class/gpio/gpio", gpio, "/value");
-					system(buff);
+					gpiovalue(gpio,0);
 				}
 #endif
 				int seriallen = s.read_wait(readbuff, 1024, serialtimeout);
@@ -286,24 +279,6 @@ int MyAliyunMqtt::openrecparsethread()
 }
 int MyAliyunMqtt::MqttMain(void* Params)
 {
-#ifndef gcc
-	for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
-	{
-		if (Allinfo[i].portinfo.PortNum == 0 || Allinfo[i].portinfo.gpio == -1)
-			continue;
-		int gpio = Allinfo[i].portinfo.gpio;
-		if (gpio != -1)
-		{
-			char buff[100];
-			sprintf(buff, "%s%d%s", "echo ", gpio, " > /sys/class/gpio/export");
-			system(buff);
-			sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", gpio, "/direction");
-			system(buff);
-			sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", gpio, "/value");
-			system(buff);
-		}
-	}
-#endif
 	MyAliyunMqtt* point = (MyAliyunMqtt*)Params;
 
 	point->MqttInit(MqttInfo[0].ServerLink, MqttInfo[0].ServerPort, MqttInfo[0].ClientId, MqttInfo[0].UserName, MqttInfo[0].Password);
@@ -331,7 +306,7 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
 
 		int alluploadvarcount = 0;	//记录所有的变量数量
-		for (int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
+		for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 		{
 			if (Allinfo[i].portinfo.id == 0)
 				continue;
@@ -368,10 +343,11 @@ int MyAliyunMqtt::MqttMain(void* Params)
 					alluploadvarcount_temp++;
 					if ((alluploadvarcount_temp % uploadperiod) \
 						&& alluploadvarcount_temp != alluploadvarcount\
-						)//&& (k != Allinfo[i].deviceinfo[j].uploadvarcount - 1))
+						&& (k != Allinfo[i].deviceinfo[j].uploadvarcount - 1))
 					{
 						continue;
 					}
+					alluploadvarcount_temp = 0;
 					point->publish(ThemeUpload[0].CtrlPub, ThemeUpload[0].QosPub, publish_json);
 					cJSON_DeleteItemFromObject(publish_json, "params");
 					cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
