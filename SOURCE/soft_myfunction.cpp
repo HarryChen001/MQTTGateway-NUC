@@ -50,7 +50,7 @@ void gpiooutput(int gpio)
 		fp = fopen(buff,"a");
 		if(fp != NULL)
 		{
-			fprintf(fp,"output");
+			fprintf(fp,"out");
 			fclose(fp);
 			break;
 		}
