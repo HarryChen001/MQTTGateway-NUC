@@ -146,6 +146,7 @@ int MyAliyunMqtt::MqttInit(char* host, int port, char* clientid, char* username,
 }
 MyAliyunMqtt::MyAliyunMqtt()
 {
+
 }
 int MyAliyunMqtt::MqttInterval(void* Params)
 {
@@ -254,6 +255,7 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 			else
 			{
 				exit(-1);
+				cJSON_Delete(json);
 			}
 			cJSON_Delete(json);
 			point->getmessage = false;
