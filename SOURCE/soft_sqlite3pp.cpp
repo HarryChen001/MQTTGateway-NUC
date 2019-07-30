@@ -280,6 +280,7 @@ int MySqlite::GetAllInfo()
 	qryThemeCtrl.finish();
 	qryThemeUpload.finish();
 	qryThemeUploadList.finish();
+	return 0;
 }
 int MySqlite::GetCountFromTable(char* tablename)
 {
