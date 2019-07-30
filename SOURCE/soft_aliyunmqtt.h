@@ -21,16 +21,22 @@ public:
 	int openmainthread();
 	int openintervalthread();
 	int openrecparsethread();
+	std::string topic;
+	std::string messageid;
+	std::string devicename;
+	std::string productkey;
 private:
 	void* pclient;
 	char payload[1024];
 	bool getmessage = false;
+	bool getrrpcmessage = false;
 	static void event_handle(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg);
 	static void message_arrive(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg);
 
 	std::thread threadid;
 	std::thread threadid_interval;
 	std::thread threadid_recparse;
+
 	static int MqttMain(void* Param);
 	static int MqttInterval(void* Param);
 	static int MqttRecParse(void* Param);

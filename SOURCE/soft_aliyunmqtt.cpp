@@ -26,16 +26,27 @@ void MyAliyunMqtt::message_arrive(void* pcontext, void* pclient, iotx_mqtt_event
 {
 	MyAliyunMqtt* pointer = (MyAliyunMqtt*)pcontext;
 	iotx_mqtt_topic_info_t* topic_info = (iotx_mqtt_topic_info_pt)msg->msg;
-	switch (msg->event_type) {
+	switch (msg->event_type)
+	{
 	case IOTX_MQTT_EVENT_PUBLISH_RECEIVED:
+	{
 		/* print topic name and topic message */
 		printf("Message Arrived: \n");
 		printf("Topic  : %.*s\n", topic_info->topic_len, topic_info->ptopic);
-		printf("Payload: %.*s\n", topic_info->payload_len, topic_info->payload);
-		printf("\n");
+		printf("Payload: %.*s\n\n", topic_info->payload_len, topic_info->payload);
 		pointer->getmessage = true;
 		strcpy(pointer->payload, topic_info->payload);
+
+		pointer->topic.clear();
+		pointer->messageid = "0";
+		pointer->topic.assign(topic_info->ptopic, 0, topic_info->topic_len);
+		size_t pos = pointer->topic.find("request/", 0);
+		if (pos != std::string::npos)
+		{
+			pointer->messageid = pointer->topic.substr(pos + strlen("request/"));
+		}
 		break;
+	}
 	default:
 		break;
 	}
@@ -57,7 +68,7 @@ int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
 	}
 	printf("subscribe topic is %s\n", subscribetopic);
 
-	res = IOT_MQTT_Subscribe_Sync(pclient, subscribetopic, iotx_qos, message_arrive, this, 1000);
+	res = IOT_MQTT_Subscribe(pclient, subscribetopic, iotx_qos, message_arrive, this);
 	if (res < 0) {
 		cout << BOLDRED << "Subscribe Topic fail!" << RESET << endl;
 	}
@@ -92,7 +103,7 @@ int MyAliyunMqtt::publish(char* publishtopic, int Qos, cJSON* json_payload)
 		free(publish_payload);
 		return -1;
 	}
-	cout << BOLDYELLOW << "SUCCESS!" << RESET << endl << endl;
+	cout << BOLDYELLOW << "SUCCESS!" << endl << endl;
 	cout << BOLDGREEN << "Paylod is -> " << publish_payload << RESET << endl;
 	free(publish_payload);
 	return 0;
@@ -146,7 +157,6 @@ int MyAliyunMqtt::MqttInit(char* host, int port, char* clientid, char* username,
 }
 MyAliyunMqtt::MyAliyunMqtt()
 {
-
 }
 int MyAliyunMqtt::MqttInterval(void* Params)
 {
@@ -188,12 +198,12 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				char readbuff[1024];
 #ifndef gcc
 				int gpio = (com == 1) ? 46 : (com == 2) ? 103 : (com == 3) ? 102 : (com == 4) ? 132 : (com == 5) ? 32 : -1;
-				com = (com == 1) ? 10 : (com == 2) ? 3 : (com == 3) ? 9 : (com == 4) ? 1 : (com == 5) ? 6:com;
+				com = (com == 1) ? 10 : (com == 2) ? 3 : (com == 3) ? 9 : (com == 4) ? 1 : (com == 5) ? 6 : com;
 				if (gpio != -1)
 				{
 					gpioexport(gpio);
 					gpiooutput(gpio);
-					gpiovalue(gpio,1);
+					gpiovalue(gpio, 1);
 				}
 #endif
 				cJSON* json_payload;
@@ -213,7 +223,7 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 #ifndef gcc
 				if (gpio != -1)
 				{
-					gpiovalue(gpio,0);
+					gpiovalue(gpio, 0);
 				}
 #endif
 				int seriallen = s.read_wait(readbuff, 1024, serialtimeout);
@@ -249,13 +259,18 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 
 				cJSON_AddStringToObject(response, "Time", tmp);
 				cJSON_AddStringToObject(response, "payload", payload);
-				point->publish(ThemeCtrl[0].CtrlPub, 1, (response));
+				if (point->messageid != "0")
+				{
+					string topic = "/sys/"+point->productkey+"/"+ point->devicename+"/rrpc/response/" + point->messageid;
+					point->publish((char*)topic.c_str(), 0, response);
+				}
+				else
+					point->publish(ThemeUpload[0].CtrlPub, 1, (response));
 				cJSON_Delete(response);
 			}
 			else
 			{
 				exit(-1);
-				cJSON_Delete(json);
 			}
 			cJSON_Delete(json);
 			point->getmessage = false;
@@ -281,15 +296,44 @@ int MyAliyunMqtt::openrecparsethread()
 }
 int MyAliyunMqtt::MqttMain(void* Params)
 {
+#ifndef gcc
+	for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
+	{
+		if (Allinfo[i].portinfo.PortNum == 0 || Allinfo[i].portinfo.gpio == -1)
+			continue;
+		int gpio = Allinfo[i].portinfo.gpio;
+		if (gpio != -1)
+		{
+			char buff[100];
+			sprintf(buff, "%s%d%s", "echo ", gpio, " > /sys/class/gpio/export");
+			system(buff);
+			sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", gpio, "/direction");
+			system(buff);
+			sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", gpio, "/value");
+			system(buff);
+		}
+	}
+#endif
 	MyAliyunMqtt* point = (MyAliyunMqtt*)Params;
+
+	string username = MqttInfo[0].UserName;
+	size_t pos = username.find('&', 0);
+	point->devicename = username.substr(0, pos);
+	point->productkey = username.substr(pos+1);
 
 	point->MqttInit(MqttInfo[0].ServerLink, MqttInfo[0].ServerPort, MqttInfo[0].ClientId, MqttInfo[0].UserName, MqttInfo[0].Password);
 	int res = point->subscribe(ThemeCtrl[0].CtrlSub, 1);
+	if (res < 0)
+	{
+		IOT_MQTT_Destroy(&(point->pclient));
+		return -1;
+	}
+	string rrpc_topic = "/sys/" + point->productkey + "/" + point->devicename + "/rrpc/request/+";
+	res = point->subscribe((char*)rrpc_topic.c_str(), 0);
 	if (res < 0) {
 		IOT_MQTT_Destroy(&(point->pclient));
 		return -1;
 	}
-
 	point->openintervalthread();		//create MQTT interval thread
 	point->openrecparsethread();		//create thread----parse the receive data
 	time_t nowtime;

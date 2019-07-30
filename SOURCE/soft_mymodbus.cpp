@@ -34,7 +34,7 @@ void set_coms(int gpio, int on)
 	else if (gpio == 5)
 		gpio = 33;
 
-	gpiovalue(gpio,on);
+	gpiovalue(gpio, on);
 }
 
 void setrts_com1(modbus_t* ctx, int on)
@@ -98,7 +98,7 @@ void modbus::modbus_rtu_init()
 		gpiooutput(gpio);
 	}
 #endif
-	for (unsigned int i = 0; i < sizeof(Allinfo)/sizeof(Allinfo_t); i++)
+	for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 	{
 		if (Allinfo[i].portinfo.PortNum == 0)
 			continue;
@@ -372,6 +372,7 @@ void modbus::modbus_write_thead(modbus* params)
 							modbus_set_slave(modbus, slaveid);
 							int rc = -1;
 							int count = 0;
+							uint16_t temp[4];
 							while (rc == -1)
 							{
 								MODBUS_SET_INT64_TO_INT16(buff, 0, (int64_t)rec_value);
@@ -415,7 +416,73 @@ void modbus::modbus_write_thead(modbus* params)
 									rc = modbus_write_bit(modbus, regadr, rec_value);
 								}
 								else
-									cout << "write :" << modbus_write_registers(modbus, regadr, regnums, tempbuff) << endl;
+									rc = modbus_write_and_read_registers(modbus, regadr, regnums, tempbuff, regadr, regnums, temp);
+
+								if (str_datatypetemp != "uint16" && str_datatypetemp != "int16" && str_datatypetemp != "bool")
+									ByteChange(temp, regnums, regendian, regbyteorder);
+
+								string varnametemp = varparamstemp->VarName;
+								double value = 0;
+								if (str_datatypetemp == "uint16")
+								{
+									value = (uint16_t)temp[0];
+								}
+								else if (str_datatypetemp == "uint32")
+								{
+									value = (uint32_t)MODBUS_GET_INT32_FROM_INT16(temp, 0);
+								}
+								else if (str_datatypetemp == "uint64")
+								{
+									value = (uint64_t)MODBUS_GET_INT64_FROM_INT16(temp, 0);
+								}
+								else if (str_datatypetemp == "int16")
+								{
+									value = (int16_t)temp[0];
+								}
+								else if (str_datatypetemp == "int32")
+								{
+									value = (int32_t)MODBUS_GET_INT32_FROM_INT16(temp, 0);
+								}
+								else if (str_datatypetemp == "int64")
+								{
+									value = (int64_t)MODBUS_GET_INT64_FROM_INT16(temp, 0);
+								}
+								else if (str_datatypetemp == "float")
+								{
+									value = params->modbus_get_float_from_int16(temp);
+								}
+								else if (str_datatypetemp == "double")
+								{
+									value = params->modbus_get_double_from_int16(temp);
+								}
+								else if (str_datatypetemp == "bool")
+								{
+									value = (uint16_t)temp[0];
+								}
+
+								cJSON* publish_json;
+								cJSON* params_json;
+								time_t nowtime;
+								char tmp[64];
+								nowtime = time(NULL); //get now time
+								strftime(tmp, sizeof(tmp), "%Y%m%d%H%M%S", localtime(&nowtime));
+								publish_json = cJSON_CreateObject();
+
+								cJSON_AddStringToObject(publish_json, "id", tmp);
+								cJSON_AddStringToObject(publish_json, "method", "method.event.property.post");
+								cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
+								cJSON_AddNumberToObject(params_json, varparamstemp->VarName.c_str(), value);
+								if (AliyunMqtt.messageid == "0")
+								{
+									AliyunMqtt.publish(ThemeUpload[0].CtrlPub, 1, publish_json);
+								}
+								else
+								{
+									string topic = "/sys/" + AliyunMqtt.productkey + "/" + AliyunMqtt.devicename + "/rrpc/response/" + AliyunMqtt.messageid;
+									AliyunMqtt.publish((char*)topic.c_str(), 0, publish_json);
+								}
+								cJSON_Delete(publish_json);
+
 								count++;
 								if (count >= 5)
 								{
