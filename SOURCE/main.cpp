@@ -3,6 +3,8 @@
 #include <cstring>
 #include <unistd.h>	//sleep()
 #include <thread>
+#include <queue>
+#include <mutex>
 
 #include "modbus/modbus-rtu.h"
 
@@ -22,6 +24,7 @@
 
 #include "soft_myfunction.h"
 
+#include <signal.h>
 using std::cin;
 using std::cout;
 using std::endl;
@@ -38,16 +41,29 @@ Allinfo_t Allinfo[20];
 Varinfo_t varinfo;
 
 std::map<std::string, double>var;
-std::map<std::string, double>var_write;
 std::queue<Varinfo_t>queue_var_write;
+
+MyAliyunMqtt AliyunMqtt;
 
 #define BASE64_ENCODE_TEST
 #define BASE64_DECODE_TEST
 #define SERIAL_TEST
 #define BASE64_ENCODE_NUM_TEST
 
+void sign_handle(int signum)
+{
+	cout << "Serivce Stop!" << endl;
+	exit(0);
+}
+
 int main(int argc, char* argv[])
 {
+	signal(SIGINT, sign_handle);
+	if (argc <= 1)
+	{
+		cout << "no Params" << endl;
+		return 0;
+	}
 #ifdef BASE64_ENCODE_TEST
 	if (!strcmp("base64encode", argv[1]))
 		while (1)
@@ -81,9 +97,9 @@ int main(int argc, char* argv[])
 			char deststring[1024];
 			cin.getline(buff, 1024);
 			Base64decode(deststring, buff);
-			for (int i = 0; i < 7; i++)
+			for (int i = 0; i < 8; i++)
 			{
-				printf("%d", deststring[i]);
+				printf("%d ", deststring[i]);
 			}
 		}
 #endif
@@ -160,21 +176,52 @@ int main(int argc, char* argv[])
 		}
 	}
 #endif
+	std::string str = argv[1];
+	if (str.find("conf", 0) == 0)
+	{
+		cout << "no conf" << endl;
+		return 0;
+	}
 	MySqlite db(argv[1]);
 	db.GetAllInfo();
 	db.~MySqlite();
 
+	for (int i = 0; i < 20; i++)
+	{
+		if (Allinfo[i].portinfo.id == 0)
+		{
+			continue;
+		}
+		for (int j = 0; j < Allinfo[i].devcount; j++)
+		{
+			DeviceInfo_t* devtemp = &Allinfo[i].deviceinfo[j];
+			if (devtemp->id == 0)
+			{
+				continue;
+			}
+			for (int k = 0; k < devtemp->allvarcount; k++)
+			{
+				VarParam_t* vartemp = &devtemp->allvarparams[k];
+				if (vartemp->id == 0)
+				{
+					continue;
+				}
+			//	cout << devtemp->address << endl << vartemp->VarName << endl;
+			}
+		}
+	}
 	modbus newmodbus;
 	newmodbus.openmainthread();
 
-	MyAliyunMqtt Mqtt;
-	Mqtt.openmainthread();
+//	sleep(5);
+//	MyAliyunMqtt Mqtt;
+	AliyunMqtt.openmainthread();
 
 	while (1)
 	{
 		char input;
 		std::cin >> input;
-		if(input == 'q' || input == 'Q')
+		if (input == 'q' || input == 'Q')
 		{
 			return -1;
 		}

@@ -8,6 +8,7 @@
 #include <map>
 
 #include "soft_mymodbus.h"
+#include "soft_aliyunmqtt.h"
 
 typedef void (rts)(modbus_t*, int);
 
@@ -191,4 +192,5 @@ extern std::map<std::string, double>var;	//store the data from modbus(read from 
 extern std::queue<Varinfo_t>queue_var_write;	//store the queue to modbus(write to modbus);
 extern Varinfo_t varinfo;					//store the info to queue(write to modbus);
 
+extern MyAliyunMqtt AliyunMqtt;
 #endif // !_MY_DATA_H_
