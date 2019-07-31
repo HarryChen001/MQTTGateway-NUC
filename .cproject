@@ -64,6 +64,8 @@
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/LIB/arm-linux/libmodbus/include}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/LIB/arm-linux/libsqlite/include}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/LIB/arm-linux/libglog/include}&quot;"/>
                                     								
                                 </option>
                                 								
@@ -94,6 +96,8 @@
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/LIB/common/libserial}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/LIB/arm-linux/libmodbus/include}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/LIB/arm-linux/libglog/include}&quot;"/>
                                     								
                                 </option>
                                 								
@@ -121,6 +125,8 @@
                                     									
                                     <listOptionValue builtIn="false" value="sqlite3"/>
                                     									
+                                    <listOptionValue builtIn="false" value="glog"/>
+                                    									
                                     <listOptionValue builtIn="false" value="rt"/>
                                     									
                                     <listOptionValue builtIn="false" value="pthread"/>
@@ -134,6 +140,8 @@
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/LIB/arm-linux/libmodbus/lib}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/LIB/arm-linux/libsqlite/lib}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/LIB/arm-linux/libglog/lib}&quot;"/>
                                     								
                                 </option>
                                 								

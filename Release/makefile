@@ -48,7 +48,7 @@ all: mqttgateway
 mqttgateway: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Cross G++ Linker'
-	arm-linux-g++ -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libaliyun/lib" -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libmodbus/lib" -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libsqlite/lib" -o "mqttgateway" $(OBJS) $(USER_OBJS) $(LIBS)
+	arm-linux-g++ -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libaliyun/lib" -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libmodbus/lib" -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libsqlite/lib" -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libglog/lib" -o "mqttgateway" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

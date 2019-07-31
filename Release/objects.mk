@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -ldl -liot_sdk -liot_tls -liot_hal -lmodbus -lsqlite3 -lrt -lpthread
+LIBS := -ldl -liot_sdk -liot_tls -liot_hal -lmodbus -lsqlite3 -lglog -lrt -lpthread
 
