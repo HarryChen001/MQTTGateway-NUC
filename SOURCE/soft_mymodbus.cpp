@@ -13,6 +13,8 @@
 #include "soft_myfunction.h"
 #include "MyData.h"
 
+#include "glog/logging.h"
+
 #define modbus_debug 0
 
 using std::cout;
@@ -178,6 +180,7 @@ void modbus::modbus_rtu_init()
 }
 void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 {
+	LOG(INFO) << "Modbus read thread : Start work! Serial is " << pallinfotemp->portinfo.PortNum << endl << endl;
 	modbus_t* modbus = pallinfotemp->fdmodbus;
 	uint16_t buff[10];
 	while (1)
@@ -273,7 +276,8 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 					count++;
 					if (count >= 7)
 					{
-						cout << BOLDRED << vartemp->VarName << "read modbus timeout!" << endl << RESET;
+					//	cout << BOLDRED << vartemp->VarName << "read modbus timeout!" << endl << RESET;
+						LOG(WARNING) << vartemp->VarName << "read modbus timeout" << endl << endl;
 						break;
 					}
 				}
@@ -327,6 +331,7 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 }
 void modbus::modbus_write_thead(modbus* params)
 {
+	LOG(INFO) << "Modbus write thread : Start work!" << endl << endl;
 	while (1)
 	{
 		if (!queue_var_write.empty())

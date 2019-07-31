@@ -16,6 +16,9 @@
 #include "cJSON/cJSON.h"
 #include "soft_myfunction.h"
 
+#include "glog/logging.h"
+#include "glog/log_severity.h"
+
 using std::cout;
 using std::endl;
 using std::string;
@@ -37,9 +40,12 @@ void MyAliyunMqtt::message_arrive(void* pcontext, void* pclient, iotx_mqtt_event
 		pointer->getmessage = true;
 		strcpy(pointer->payload, topic_info->payload);
 
+
 		pointer->topic.clear();
 		pointer->messageid = "0";
 		pointer->topic.assign(topic_info->ptopic, 0, topic_info->topic_len);
+
+		LOG(INFO) << "GET Message from: " << pointer->topic << endl << "Message Payload is : " << pointer->payload << endl;
 		size_t pos = pointer->topic.find("request/", 0);
 		if (pos != std::string::npos)
 		{
@@ -66,15 +72,19 @@ int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
 		printf("Unsupport Qos Setting!\n");
 		return -1;
 	}
-	printf("subscribe topic is %s\n", subscribetopic);
+	LOG(INFO) << "Subscribe Topic is: " << subscribetopic << endl << endl;
 
 	res = IOT_MQTT_Subscribe(pclient, subscribetopic, iotx_qos, message_arrive, this);
-	if (res < 0) {
+
+	if (res < 0)
+	{
+		LOG(WARNING) << "Subscribe Topic Fail" << endl << endl;
 		cout << BOLDRED << "Subscribe Topic fail!" << RESET << endl;
+
 	}
 	else
 	{
-		cout << BOLDYELLOW << "Subscribe Topic SUCCESS!" << RESET << endl;
+		LOG(INFO) << "Subscribe Topic SUCCESS!" << endl << endl;
 	}
 	return 0;
 }
@@ -94,17 +104,15 @@ int MyAliyunMqtt::publish(char* publishtopic, int Qos, cJSON* json_payload)
 
 	res = IOT_MQTT_Publish(pclient, publishtopic, &topic_msg);
 
-	cout << BOLDGREEN << "Publish to topic : " << publishtopic << endl;
-	publish_payload = cJSON_Print(json_payload);
+	publish_payload = cJSON_PrintUnformatted(json_payload);
+	LOG(INFO) << "Publish to topic : " << publishtopic << endl << endl;
 	if (res < 0)
 	{
-		cout << BOLDRED << "FAILED!" << endl << endl;
-		cout << BOLDYELLOW << "Paylod is :\n " << BOLDRED << publish_payload << RESET << endl;
 		free(publish_payload);
+		LOG(WARNING) << "FAILED to publish.Payload is : " << publish_payload << endl << endl;
 		return -1;
 	}
-	cout << BOLDYELLOW << "SUCCESS!" << endl << endl;
-	cout << BOLDGREEN << "Paylod is -> " << publish_payload << RESET << endl;
+	LOG(INFO) << "SUCCESS! Payload is ->" <<  publish_payload << endl << endl;
 	free(publish_payload);
 	return 0;
 }

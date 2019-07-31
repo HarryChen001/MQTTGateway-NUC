@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <stdio.h>
 #include <cstring>
 #include <unistd.h>	//sleep()
@@ -25,6 +26,9 @@
 #include "soft_myfunction.h"
 
 #include <signal.h>
+
+#include "glog/logging.h"
+
 using std::cin;
 using std::cout;
 using std::endl;
@@ -52,7 +56,8 @@ MyAliyunMqtt AliyunMqtt;
 
 void sign_handle(int signum)
 {
-	cout << "Serivce Stop!" << endl;
+	LOG(WARNING) << "Program stop by User" << endl << endl;
+	google::ShutdownGoogleLogging();
 	exit(0);
 }
 
@@ -64,6 +69,22 @@ int main(int argc, char* argv[])
 		cout << "no Params" << endl;
 		return 0;
 	}
+
+	FLAGS_logtostderr = 0;					//设置日志消息是否转到标准输出而不是日志文件
+	FLAGS_alsologtostderr = 0;				//设置日志消息除了日志文件之外是否去标准输出
+	FLAGS_colorlogtostderr = 1;				//设置记录到标准输出的颜色消息（如果终端支持）
+	FLAGS_log_prefix = 1;					//设置日志前缀是否应该添加到每行输出
+	FLAGS_logbufsecs = 0;					//设置可以缓冲日志的最大秒数，0指实时输出
+	FLAGS_max_log_size = 10;				//设置最大日志文件大小（以MB为单位）
+	FLAGS_stop_logging_if_full_disk = true;	//设置是否在磁盘已满时避免日志记录到磁盘
+	FLAGS_log_dir = "./logdir";
+
+	google::InitGoogleLogging("LOG");
+	google::SetLogDestination(google::GLOG_INFO, "LOG");	//设置特定严重级别的日志的输出目录和前缀。第一个参数为日志级别，第二个参数表示输出目录及日志文件名前缀
+	google::SetLogFilenameExtension("");					//在日志文件名中级别后添加一个扩展名。适用于所有严重级别
+	google::SetStderrLogging(google::INFO);				//大于指定级别的日志都输出到标准输出
+
+	LOG(INFO) << "Start Work!" << endl << endl;
 #ifdef BASE64_ENCODE_TEST
 	if (!strcmp("base64encode", argv[1]))
 		while (1)
@@ -177,10 +198,9 @@ int main(int argc, char* argv[])
 	}
 #endif
 	std::string str = argv[1];
-	if (str.find("conf", 0) == 0)
+	if (str.find("conf", 0) == string::npos)
 	{
-		cout << "no conf" << endl;
-		return 0;
+		LOG(FATAL) << "NO CONF!" << endl;
 	}
 	MySqlite db(argv[1]);
 	db.GetAllInfo();
@@ -223,6 +243,7 @@ int main(int argc, char* argv[])
 		std::cin >> input;
 		if (input == 'q' || input == 'Q')
 		{
+			google::ShutdownGoogleLogging();
 			return -1;
 		}
 		sleep(1);
