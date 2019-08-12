@@ -13,6 +13,8 @@
 
 #include "sqlite3pp/sqlite3pp.h"
 
+#include "base64/base64.h"
+
 #include "soft_sqlite3pp.h"
 
 #include "MyData.h"
@@ -21,13 +23,15 @@
 
 #include "soft_mymodbus.h"
 
-#include "base64/base64.h"
-
 #include "soft_myfunction.h"
 
 #include <signal.h>
 
 #include "glog/logging.h"
+
+#include "sdk_include.h"
+
+#include "infra_cjson.h"
 
 using std::cin;
 using std::cout;
@@ -46,8 +50,7 @@ Varinfo_t varinfo;
 
 std::map<std::string, double>var;
 std::queue<Varinfo_t>queue_var_write;
-
-MyAliyunMqtt AliyunMqtt;
+std::queue<MessageInfo_t>queueMessageInfo;
 
 #define BASE64_ENCODE_TEST
 #define BASE64_DECODE_TEST
@@ -60,7 +63,6 @@ void sign_handle(int signum)
 	google::ShutdownGoogleLogging();
 	exit(0);
 }
-
 int main(int argc, char* argv[])
 {
 	signal(SIGINT, sign_handle);
@@ -69,8 +71,9 @@ int main(int argc, char* argv[])
 		cout << "no Params" << endl;
 		return 0;
 	}
+	LITE_set_loglevel(0);
 
-	FLAGS_logtostderr = 0;					//设置日志消息是否转到标准输出而不是日志文件
+	FLAGS_logtostderr = 1;					//设置日志消息是否转到标准输出而不是日志文件
 	FLAGS_alsologtostderr = 0;				//设置日志消息除了日志文件之外是否去标准输出
 	FLAGS_colorlogtostderr = 1;				//设置记录到标准输出的颜色消息（如果终端支持）
 	FLAGS_log_prefix = 1;					//设置日志前缀是否应该添加到每行输出
@@ -206,37 +209,54 @@ int main(int argc, char* argv[])
 	db.GetAllInfo();
 	db.~MySqlite();
 
-	for (int i = 0; i < 20; i++)
-	{
-		if (Allinfo[i].portinfo.id == 0)
-		{
-			continue;
-		}
-		for (int j = 0; j < Allinfo[i].devcount; j++)
-		{
-			DeviceInfo_t* devtemp = &Allinfo[i].deviceinfo[j];
-			if (devtemp->id == 0)
-			{
-				continue;
-			}
-			for (int k = 0; k < devtemp->allvarcount; k++)
-			{
-				VarParam_t* vartemp = &devtemp->allvarparams[k];
-				if (vartemp->id == 0)
-				{
-					continue;
-				}
-			//	cout << devtemp->address << endl << vartemp->VarName << endl;
-			}
-		}
-	}
 	modbus newmodbus;
 	newmodbus.openmainthread();
 
-//	sleep(5);
-//	MyAliyunMqtt Mqtt;
-	AliyunMqtt.openmainthread();
+	MyAliyunMqtt Mqtt;
 
+	for(int i = 0 ; i < MqttInfo[0].MqttCount;i++)
+	{
+		if(!MqttInfo[i].Enable)
+			continue;
+		char* host		= MqttInfo[i].ServerLink;
+		char* clientid	= MqttInfo[i].ClientId;
+		char* username	= MqttInfo[i].UserName;
+		char* password	= MqttInfo[i].Password;
+		int port		= MqttInfo[i].ServerPort;
+
+		MqttInfo[i].client = Mqtt.MqttInit(host, port, clientid, username, password);
+
+		for (int j = 0; j < ThemeCtrl[0].Ctrlcount; j++)
+		{
+			if (ThemeCtrl[j].MqttId == MqttInfo[i].id)
+			{
+				ThemeCtrl[j].client = MqttInfo[i].client;
+			}
+		}
+		for (int j = 0; j < ThemeUpload[0].UploadThemeqCount; j++)
+		{
+			if (ThemeUpload[j].MqttId == MqttInfo[i].id)
+			{
+				ThemeUpload[j].client = MqttInfo[i].client;
+			}
+		}
+		if (strstr(host, "aliyuncs") != NULL)
+		{
+			std::string temp = username;
+			size_t pos = temp.find('&', 0);
+			MqttInfo[i].DeviceName = temp.substr(0, pos);
+			MqttInfo[i].ProductName = temp.substr(pos + 1);
+			string rrpc_topic = "/sys/" + MqttInfo[i].ProductName + "/" + MqttInfo[i].DeviceName + "/rrpc/request/+";
+			Mqtt.subscribe(ThemeCtrl[i].client, (char*)rrpc_topic.c_str(), 0);
+		}
+	}
+	for (int i = 0; i < ThemeCtrl[0].Ctrlcount; i++)
+	{
+		if(!ThemeCtrl[i].Enable)
+			continue;
+		Mqtt.subscribe(ThemeCtrl[i].client, ThemeCtrl[i].CtrlSub, 0);
+	}
+	Mqtt.openmainthread();
 	while (1)
 	{
 		char input;
@@ -246,7 +266,7 @@ int main(int argc, char* argv[])
 			google::ShutdownGoogleLogging();
 			return -1;
 		}
-		sleep(1);
+		usleep(1000);
 	}
 	return 0;
 }

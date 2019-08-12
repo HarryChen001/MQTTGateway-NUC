@@ -13,6 +13,8 @@
 #include "soft_myfunction.h"
 #include "MyData.h"
 
+#include "cJSON/cJSON.h"
+
 #include "glog/logging.h"
 
 #define modbus_debug 0
@@ -332,6 +334,7 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 void modbus::modbus_write_thead(modbus* params)
 {
 	LOG(INFO) << "Modbus write thread : Start work!" << endl << endl;
+	MyAliyunMqtt tempMqtt;
 	while (1)
 	{
 		if (!queue_var_write.empty())
@@ -340,6 +343,8 @@ void modbus::modbus_write_thead(modbus* params)
 		{
 			string rec_varname = queue_var_write.front().varname;
 			double rec_value = queue_var_write.front().value;
+			void* client = queue_var_write.front().client;
+			string topicname = queue_var_write.front().topicname;
 			uint16_t buff[4];
 			queue_var_write.pop();
 			for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
@@ -422,7 +427,8 @@ void modbus::modbus_write_thead(modbus* params)
 								}
 								else
 									rc = modbus_write_and_read_registers(modbus, regadr, regnums, tempbuff, regadr, regnums, temp);
-
+								if(rc == -1)
+									continue;
 								if (str_datatypetemp != "uint16" && str_datatypetemp != "int16" && str_datatypetemp != "bool")
 									ByteChange(temp, regnums, regendian, regbyteorder);
 
@@ -477,15 +483,8 @@ void modbus::modbus_write_thead(modbus* params)
 								cJSON_AddStringToObject(publish_json, "method", "method.event.property.post");
 								cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
 								cJSON_AddNumberToObject(params_json, varparamstemp->VarName.c_str(), value);
-								if (AliyunMqtt.messageid == "0")
-								{
-									AliyunMqtt.publish(ThemeUpload[0].CtrlPub, 1, publish_json);
-								}
-								else
-								{
-									string topic = "/sys/" + AliyunMqtt.productkey + "/" + AliyunMqtt.devicename + "/rrpc/response/" + AliyunMqtt.messageid;
-									AliyunMqtt.publish((char*)topic.c_str(), 0, publish_json);
-								}
+								tempMqtt.publish(client, (char*)topicname.c_str(), 0, cJSON_PrintUnformatted(publish_json));
+
 								cJSON_Delete(publish_json);
 
 								count++;

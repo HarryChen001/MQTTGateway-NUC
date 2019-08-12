@@ -12,14 +12,14 @@
 
 typedef void (rts)(modbus_t*, int);
 
-#define MqttConnect 1
+#define MqttConnect 10
 #define SerialNums 10
 #define DeviceNums 10
-#define ThemeCtrlNums 1
-#define ThemeUploadNums 1
-#define AllVarNums 800
+#define ThemeCtrlNums 10			//控制主题的数量
+#define ThemeUploadNums 10		//上传主题的数量
+#define AllVarNums 2000
 #define VarNumsPeriodDev 200
-#define UploadVarNums 800
+#define UploadVarNums 2000
 #define uploadperiod 50
 
 #define RESET   "\033[0m"
@@ -77,6 +77,7 @@ typedef struct _ThemeCtrl_t {
 	char CtrlSub[100];		//订阅的主题
 	int uartID;
 	int Ctrlcount;
+	void* client;
 }ThemeCtrl_t;
 
 //上传主题相关参数
@@ -90,6 +91,11 @@ typedef struct _ThemeUpload_t {
 	char CtrlPub[100];		//发布的主题
 	char UploadName[100];	//定时上传主题的命名
 	char Proto[20];			//通信协议
+	void* client;
+
+	int UploadThemeqCount;
+ 	int varcount;
+	std::string varname[UploadVarNums];
 }ThemeUpload_t;
 
 //上传主题绑定的变量
@@ -102,7 +108,7 @@ typedef struct _ThemeUploadList_t {
 	int VarId;				//绑定变量表VarParam的Id
 	std::string VarName;	//变量名
 
-	int UploadCount;
+	int UploadVarCount;
 }ThemeUploadList_t;
 
 typedef struct _VarParam_t {
@@ -157,8 +163,12 @@ typedef struct _ConnectInfo_t {
 	char ServerLink[100];
 	char MqttName[100];
 
-	int MqttCount;
+	std::string ProductName;
+	std::string DeviceName;
+	std::string MessageId;
 
+	int MqttCount;
+	void* client;
 }ConnectInfo_t;
 typedef struct _Allinfo_t {
 
@@ -180,17 +190,25 @@ union floatunion
 	float floattype;
 };
 typedef struct _Varinfo_t {
+	void* client;
+	std::string topicname;
 	std::string varname;
 	double value;
 }Varinfo_t;
+typedef struct _MessageInfo_t
+{
+	std::string TopicName;
+	std::string Message;
+	void* client;
+}MessageInfo_t;
 extern ConnectInfo_t MqttInfo[MqttConnect];
-extern ThemeCtrl_t ThemeCtrl[ThemeCtrlNums];
+extern ThemeCtrl_t	 ThemeCtrl[ThemeCtrlNums];
 extern ThemeUpload_t ThemeUpload[ThemeUploadNums];
 
 extern Allinfo_t Allinfo[20];
 extern std::map<std::string, double>var;	//store the data from modbus(read from modbus);
 extern std::queue<Varinfo_t>queue_var_write;	//store the queue to modbus(write to modbus);
+extern std::queue<MessageInfo_t>queueMessageInfo;
 extern Varinfo_t varinfo;					//store the info to queue(write to modbus);
 
-extern MyAliyunMqtt AliyunMqtt;
 #endif // !_MY_DATA_H_

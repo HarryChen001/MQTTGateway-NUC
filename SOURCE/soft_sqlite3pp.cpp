@@ -171,16 +171,18 @@ int MySqlite::GetAllInfo()
 	j = 0;
 	for (query::iterator i = qryThemeUpload.begin(); i != qryThemeUpload.end(); ++i)
 	{
-		ThemeUpload[j].id = (*i).get<int>(0);
-		ThemeUpload[j].Enable = (*i).get<int>(1);
-		ThemeUpload[j].MqttId = (*i).get<int>(2);
-		ThemeUpload[j].UploadId = (*i).get<int>(3);
-		ThemeUpload[j].PubPeriod = (*i).get<int>(4);
-		ThemeUpload[j].QosPub = (*i).get<int>(5);
-		strcpy(ThemeUpload[j].CtrlPub, (*i).get<const char*>(6));
-		strcpy(ThemeUpload[j].UploadName, (*i).get<const char*>(7));
-		strcpy(ThemeUpload[j].Proto, (*i).get<const char*>(8));
-		j++;
+		int* j = &ThemeUpload[0].UploadThemeqCount;
+		ThemeUpload[*j].id = (*i).get<int>(0);
+		ThemeUpload[*j].Enable = (*i).get<int>(1);
+		ThemeUpload[*j].MqttId = (*i).get<int>(2);
+		ThemeUpload[*j].UploadId = (*i).get<int>(3);
+		ThemeUpload[*j].PubPeriod = (*i).get<int>(4);
+		ThemeUpload[*j].QosPub = (*i).get<int>(5);
+		strcpy(ThemeUpload[*j].CtrlPub, (*i).get<const char*>(6));
+		strcpy(ThemeUpload[*j].UploadName, (*i).get<const char*>(7));
+		strcpy(ThemeUpload[*j].Proto, (*i).get<const char*>(8));
+
+		(*j)++;
 	}
 	query qryVarParam(db, "SELECT * FROM VarParam");
 	for (query::iterator i = qryVarParam.begin(); i != qryVarParam.end(); ++i)
@@ -243,6 +245,16 @@ int MySqlite::GetAllInfo()
 		int Devid = (*i).get<int>(6);
 		std::string varname = (*i).get<const char*>(6);
 
+		for (int i = 0; i < ThemeUpload[0].UploadThemeqCount; i++)
+		{
+			int* count = &ThemeUpload[i].varcount;
+			if (ThemeUpload[i].UploadId == uploadid)
+			{
+				ThemeUpload[i].varname[(*count)++] = varname;
+				break;
+			}
+		}
+
 		for (int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 		{
 			if (Allinfo[i].portinfo.id == 0)
@@ -280,7 +292,6 @@ int MySqlite::GetAllInfo()
 	qryThemeCtrl.finish();
 	qryThemeUpload.finish();
 	qryThemeUploadList.finish();
-	return 0;
 }
 int MySqlite::GetCountFromTable(char* tablename)
 {

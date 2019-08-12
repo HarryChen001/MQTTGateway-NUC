@@ -3,32 +3,8 @@
 
 #include "infra_types.h"
 
-#ifdef _WIN32
-    #if !defined(CC_IS_MINGW32)
-        #ifdef DLL_HAL_EXPORTS
-            #define DLL_HAL_API __declspec(dllexport)
-        #else
-            #define DLL_HAL_API __declspec(dllimport)
-        #endif
-    #else
-        #define DLL_HAL_API
-    #endif
-#else
-    #define DLL_HAL_API
-#endif
-
-#ifdef _WIN32
-    #if !defined(CC_IS_MINGW32)
-        #ifdef DLL_IOT_EXPORTS
-            #define DLL_IOT_API __declspec(dllexport)
-        #else
-            #define DLL_IOT_API __declspec(dllimport)
-        #endif
-    #else
-        #define DLL_IOT_API
-    #endif
-#else
-    #define DLL_IOT_API
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #define IOTX_SDK_VERSION                "3.0.1"
@@ -44,6 +20,8 @@
 #define IOTX_NETWORK_IF_LEN             (160)
 #define IOTX_FIRMWARE_VER_LEN           (32)
 #define IOTX_URI_MAX_LEN                (135)
+#define IOTX_DOMAIN_MAX_LEN             (64)
+#define IOTX_CUSTOMIZE_INFO_LEN         (80)
 
 #ifndef _IN_
     #define _IN_
@@ -347,10 +325,25 @@ typedef enum {
     IOTX_HTTP_REGION_MAX         /* Maximum number of domain */
 } iotx_http_region_types_t;
 
+/**
+ * @brief contains iot_ioctl context
+ *
+ */
+typedef struct {
+    int domain_type;
+    int dynamic_register;
+    char cloud_custom_domain[IOTX_DOMAIN_MAX_LEN + 1];
+    uint16_t mqtt_port_num;
+    char http_custom_domain[IOTX_DOMAIN_MAX_LEN + 1];
+    char mqtt_customzie_info[IOTX_CUSTOMIZE_INFO_LEN + 1];
+} sdk_impl_ctx_t;
+
 #define IOTX_HTTP_DOMAIN_NUMBER (6)
 extern const char *g_infra_http_domain[IOTX_HTTP_DOMAIN_NUMBER];
 
-#endif
-
 extern int iotx_facility_json_print(const char *str, int level, ...);
+#ifdef __cplusplus
+}
+#endif
+#endif
 

@@ -7,8 +7,8 @@
 #include <unistd.h>
 #include <queue>
 
-#include "mqtt_api.h"
-#include "dev_sign_api.h"
+#include "sdk_include.h"
+
 #include "MyData.h"
 #include "soft_mymodbus.h"
 #include "libserial/Serial.h"
@@ -18,6 +18,8 @@
 
 #include "glog/logging.h"
 #include "glog/log_severity.h"
+
+#include "iotx_mqtt_client.h"
 
 using std::cout;
 using std::endl;
@@ -33,31 +35,22 @@ void MyAliyunMqtt::message_arrive(void* pcontext, void* pclient, iotx_mqtt_event
 	{
 	case IOTX_MQTT_EVENT_PUBLISH_RECEIVED:
 	{
-		/* print topic name and topic message */
-		printf("Message Arrived: \n");
-		printf("Topic  : %.*s\n", topic_info->topic_len, topic_info->ptopic);
-		printf("Payload: %.*s\n\n", topic_info->payload_len, topic_info->payload);
-		pointer->getmessage = true;
-		strcpy(pointer->payload, topic_info->payload);
 
+		MessageInfo_t temp;
+		temp.Message.assign(topic_info->payload, topic_info->payload_len);
+		temp.TopicName.assign(topic_info->ptopic, topic_info->topic_len);
+		temp.client = pclient;
+		queueMessageInfo.push(temp);
 
-		pointer->topic.clear();
-		pointer->messageid = "0";
-		pointer->topic.assign(topic_info->ptopic, 0, topic_info->topic_len);
+		LOG(INFO) << "GET Message from: " << temp.TopicName << endl << "Message Payload is : " << temp.Message << endl;
 
-		LOG(INFO) << "GET Message from: " << pointer->topic << endl << "Message Payload is : " << pointer->payload << endl;
-		size_t pos = pointer->topic.find("request/", 0);
-		if (pos != std::string::npos)
-		{
-			pointer->messageid = pointer->topic.substr(pos + strlen("request/"));
-		}
 		break;
 	}
 	default:
 		break;
 	}
 }
-int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
+int MyAliyunMqtt::subscribe(void* client, char* subscribetopic, int Qos)
 {
 	int res = 0;
 	iotx_mqtt_qos_t iotx_qos;
@@ -73,14 +66,11 @@ int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
 		return -1;
 	}
 	LOG(INFO) << "Subscribe Topic is: " << subscribetopic << endl << endl;
-
-	res = IOT_MQTT_Subscribe(pclient, subscribetopic, iotx_qos, message_arrive, this);
-
+	res = IOT_MQTT_Subscribe(client, subscribetopic, iotx_qos, message_arrive, this);
 	if (res < 0)
 	{
 		LOG(WARNING) << "Subscribe Topic Fail" << endl << endl;
 		cout << BOLDRED << "Subscribe Topic fail!" << RESET << endl;
-
 	}
 	else
 	{
@@ -88,8 +78,29 @@ int MyAliyunMqtt::subscribe(char* subscribetopic, int Qos)
 	}
 	return 0;
 }
+int MyAliyunMqtt::publish(void* client, char* publishtopic, int Qos, char* json_payload)
+{
+	int res = -1;
+	iotx_mqtt_topic_info_t topic_msg;
+	topic_msg.qos = Qos;
+	topic_msg.retain = 0;
+	topic_msg.dup = 0;
+	topic_msg.payload = json_payload;
+	topic_msg.payload_len = strlen(json_payload);
+	res = IOT_MQTT_Publish(client, publishtopic, &topic_msg);
 
-int MyAliyunMqtt::publish(char* publishtopic, int Qos, cJSON* json_payload)
+	LOG(INFO) << "Publish to topic : " << publishtopic << endl << endl;
+	if (res < 0)
+	{
+		LOG(WARNING) << "FAILED to publish.Payload is : " << json_payload << endl << endl;
+
+		return -1;
+	}
+	LOG(INFO) << "SUCCESS! Payload is ->" << json_payload << endl << endl;
+
+	return 0;
+}
+int MyAliyunMqtt::publish_cjson(void* client,char* publishtopic, int Qos, cJSON* json_payload)
 {
 	int res = -1;
 	iotx_mqtt_topic_info_t topic_msg;
@@ -101,15 +112,13 @@ int MyAliyunMqtt::publish(char* publishtopic, int Qos, cJSON* json_payload)
 	topic_msg.dup = 0;
 	topic_msg.payload = publish_payload;
 	topic_msg.payload_len = strlen(publish_payload);
+	res = IOT_MQTT_Publish(client, publishtopic, &topic_msg);
 
-	res = IOT_MQTT_Publish(pclient, publishtopic, &topic_msg);
-
-	publish_payload = cJSON_PrintUnformatted(json_payload);
 	LOG(INFO) << "Publish to topic : " << publishtopic << endl << endl;
 	if (res < 0)
 	{
-		free(publish_payload);
 		LOG(WARNING) << "FAILED to publish.Payload is : " << publish_payload << endl << endl;
+		free(publish_payload);
 		return -1;
 	}
 	LOG(INFO) << "SUCCESS! Payload is ->" <<  publish_payload << endl << endl;
@@ -118,7 +127,6 @@ int MyAliyunMqtt::publish(char* publishtopic, int Qos, cJSON* json_payload)
 }
 void MyAliyunMqtt::event_handle(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg)
 {
-	//	printf("msg->event_type : %d\n", msg->event_type);
 }
 
 /*
@@ -137,14 +145,12 @@ MyAliyunMqtt::~MyAliyunMqtt()
 {
 
 }
-int MyAliyunMqtt::MqttInit(char* host, int port, char* clientid, char* username, char* password)
+void* MyAliyunMqtt::MqttInit(char* host, int port, char* clientid, char* username, char* password)
 {
 	iotx_mqtt_param_t       mqtt_params;
-
 	memset(&mqtt_params, 0x0, sizeof(mqtt_params));
-
-	mqtt_params.write_buf_size = 1024;
-	mqtt_params.read_buf_size = 1024;
+	mqtt_params.write_buf_size = 2048;
+	mqtt_params.read_buf_size = 2048;
 	mqtt_params.host = host;
 	mqtt_params.client_id = clientid;
 	mqtt_params.password = password;
@@ -155,23 +161,28 @@ int MyAliyunMqtt::MqttInit(char* host, int port, char* clientid, char* username,
 	mqtt_params.clean_session = 1;
 	mqtt_params.handle_event.h_fp = event_handle;
 	mqtt_params.handle_event.pcontext = NULL;
-
-	pclient = IOT_MQTT_Construct(&mqtt_params);
-	if (NULL == pclient) {
-		printf("MQTT construct failed");
-		return -1;
+	void* client = IOT_MQTT_Construct(&mqtt_params);
+	if (NULL == client)
+	{
+		printf("MQTT construct failed\n");
+		exit(-1);
 	}
-	return 0;
+	return client;
 }
 MyAliyunMqtt::MyAliyunMqtt()
 {
 }
 int MyAliyunMqtt::MqttInterval(void* Params)
 {
-	MyAliyunMqtt* point = (MyAliyunMqtt*)Params;
 	while (1)
 	{
-		IOT_MQTT_Yield((point->pclient), 200);
+		for (int i = 0; i < MqttInfo[0].MqttCount; i++)
+		{
+			if (MqttInfo[i].client != NULL)
+			{
+				IOT_MQTT_Yield(MqttInfo[i].client, 10);
+			}
+		}
 	}
 	return 0;
 }
@@ -181,11 +192,31 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 	Serial s;
 	while (1)
 	{
-		if (point->getmessage == true)
+		if (!queueMessageInfo.empty())
+		{
+			cout << endl;
+		}
+		while (!queueMessageInfo.empty())
 		{
 			cJSON* json, * json_params;
-			json = cJSON_Parse(point->payload);
+			void* client = queueMessageInfo.front().client;
+			string jsonPayload = queueMessageInfo.front().Message;
+			string topicname = queueMessageInfo.front().TopicName;
+			queueMessageInfo.pop();
+			json = cJSON_Parse(jsonPayload.c_str());
 
+			size_t pos = topicname.find("request", 0);
+			if (pos != string::npos)
+				varinfo.topicname = topicname.substr(0, pos) + "response" + topicname.substr(pos + strlen("request"));
+			else
+			{
+				for (int i = 0; i < ThemeCtrl[0].Ctrlcount; i++)
+				{
+					strstr(ThemeCtrl[i].CtrlSub, topicname.c_str());
+					varinfo.topicname = ThemeCtrl[i].CtrlPub;
+					break;
+				}
+			}
 			json_params = cJSON_GetObjectItem(json, "params");
 			if (json_params)
 			{
@@ -194,6 +225,8 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				{
 					varinfo.varname = jsontemp->string;
 					varinfo.value = jsontemp->valuedouble;
+					varinfo.client = client;
+
 					queue_var_write.push(varinfo);
 					jsontemp = jsontemp->next;
 				}
@@ -267,23 +300,15 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 
 				cJSON_AddStringToObject(response, "Time", tmp);
 				cJSON_AddStringToObject(response, "payload", payload);
-				if (point->messageid != "0")
-				{
-					string topic = "/sys/"+point->productkey+"/"+ point->devicename+"/rrpc/response/" + point->messageid;
-					point->publish((char*)topic.c_str(), 0, response);
-				}
-				else
-					point->publish(ThemeUpload[0].CtrlPub, 1, (response));
+				int Qos = 0;
+				if (topicname.find("/respone/") == string::npos)
+					Qos = 1;
+				point->publish(client, (char*)varinfo.topicname.c_str(), Qos, payload);
+
 				cJSON_Delete(response);
 			}
-			else
-			{
-				exit(-1);
-			}
-			cJSON_Delete(json);
-			point->getmessage = false;
 		}
-		usleep(10000);
+		usleep(1000);
 	}
 	return 0;
 }
@@ -324,24 +349,6 @@ int MyAliyunMqtt::MqttMain(void* Params)
 #endif
 	MyAliyunMqtt* point = (MyAliyunMqtt*)Params;
 
-	string username = MqttInfo[0].UserName;
-	size_t pos = username.find('&', 0);
-	point->devicename = username.substr(0, pos);
-	point->productkey = username.substr(pos+1);
-
-	point->MqttInit(MqttInfo[0].ServerLink, MqttInfo[0].ServerPort, MqttInfo[0].ClientId, MqttInfo[0].UserName, MqttInfo[0].Password);
-	int res = point->subscribe(ThemeCtrl[0].CtrlSub, 1);
-	if (res < 0)
-	{
-		IOT_MQTT_Destroy(&(point->pclient));
-		return -1;
-	}
-	string rrpc_topic = "/sys/" + point->productkey + "/" + point->devicename + "/rrpc/request/+";
-	res = point->subscribe((char*)rrpc_topic.c_str(), 0);
-	if (res < 0) {
-		IOT_MQTT_Destroy(&(point->pclient));
-		return -1;
-	}
 	point->openintervalthread();		//create MQTT interval thread
 	point->openrecparsethread();		//create thread----parse the receive data
 	time_t nowtime;
@@ -359,53 +366,31 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		cJSON_AddStringToObject(publish_json, "method", "method.event.property.post");
 		cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
 
-		int alluploadvarcount = 0;	//记录所有的变量数量
-		for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
-		{
-			if (Allinfo[i].portinfo.id == 0)
-				continue;
-			for (int j = 0; j < Allinfo[i].devcount; j++)
-			{
-				alluploadvarcount += Allinfo[i].deviceinfo->uploadvarcount;
-			}
-		}
-
 		int alluploadvarcount_temp = 0;	//记录已经上传的变量的数量
-		for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
+
+		for (int i = 0; i < ThemeUpload[0].UploadThemeqCount; i++)
 		{
-			if (Allinfo[i].portinfo.id == 0)
+			for (int j = 0; j < ThemeUpload[i].varcount; j++)
 			{
-				continue;
-			}
-			for (int j = 0; j < Allinfo[i].devcount; j++)
-			{
-				if (Allinfo[i].deviceinfo[j].id == 0)
+				if (ThemeUpload[i].Enable == 0)
+					continue;
+				string varname = ThemeUpload[i].varname[j];
+				if (varname.empty())
+					continue;
+				double value = var[varname];
+				cJSON_AddNumberToObject(params_json, varname.c_str(), value);
+				alluploadvarcount_temp++;
+				//检查变量数量是否到达设定的数量或者该设备下已无可读变量，是则上发数据到指定主题
+				if ((alluploadvarcount_temp % uploadperiod) \
+					&& alluploadvarcount_temp != ThemeUpload[i].varcount)
 				{
 					continue;
 				}
-				for (int k = 0; k < Allinfo[i].deviceinfo[j].uploadvarcount; k++)
-				{
-					VarParam_t* uploadvartemp = &Allinfo[i].deviceinfo[j].uploadvarparam[k];
-					if (uploadvartemp->id == 0)
-					{
-						continue;
-					}
-					std::string varname = uploadvartemp->VarName;
-					double value = var[varname];
-					cJSON_AddNumberToObject(params_json, varname.c_str(), value);
-					//检查变量数量是否到达设定的数量或者该设备下已无可读变量，是则上发数据到指定主题
-					alluploadvarcount_temp++;
-					if ((alluploadvarcount_temp % uploadperiod) \
-						&& alluploadvarcount_temp != alluploadvarcount\
-						&& (k != Allinfo[i].deviceinfo[j].uploadvarcount - 1))
-					{
-						continue;
-					}
-					alluploadvarcount_temp = 0;
-					point->publish(ThemeUpload[0].CtrlPub, ThemeUpload[0].QosPub, publish_json);
-					cJSON_DeleteItemFromObject(publish_json, "params");
-					cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
-				}
+				alluploadvarcount_temp = 0;
+				point->publish(ThemeUpload[i].client, ThemeUpload[i].CtrlPub, ThemeUpload[i].QosPub, cJSON_PrintUnformatted(publish_json));
+
+				cJSON_DeleteItemFromObject(publish_json, "params");
+				cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
 			}
 		}
 		sleep(ThemeUpload[0].PubPeriod);

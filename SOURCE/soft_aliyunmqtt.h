@@ -2,34 +2,29 @@
 #ifndef _SOFT_ALIYUNMQTT_H
 #define _SOFT_ALIYUNMQTT_H_
 
-#include "mqtt_api.h"
 #include "thread"
+//#include "mqtt_api.h"
+#include "sdk_include.h"
 #include "cJSON/cJSON.h"
-class MyAliyunMqtt{
+extern "C" {
+	int     LITE_get_loglevel(void);
+	void LITE_set_loglevel(int);
+}
+
+class MyAliyunMqtt {
 public:
 	MyAliyunMqtt();
-	int MqttInit(char* host, int port, char* clientid, char* username, char* password);
+	void* MqttInit(char* host, int port, char* clientid, char* username, char* password);
 
 	~MyAliyunMqtt();
 
-	/*
-	���ĺ���
-	handle�����,pClient
-	*/
-	int subscribe(char* subscribetopic, int Qos);
-	int publish(char* publishtopic, int Qos,cJSON* payload);
+	int subscribe(void* client,char* subscribetopic, int Qos);
+	int publish_cjson(void* client,char* publishtopic, int Qos, cJSON* payload);
+	int publish(void* client,char* publishtopic, int Qos, char* payload);
 	int openmainthread();
 	int openintervalthread();
 	int openrecparsethread();
-	std::string topic;
-	std::string messageid;
-	std::string devicename;
-	std::string productkey;
 private:
-	void* pclient;
-	char payload[1024];
-	bool getmessage = false;
-	bool getrrpcmessage = false;
 	static void event_handle(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg);
 	static void message_arrive(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg);
 
@@ -41,5 +36,7 @@ private:
 	static int MqttInterval(void* Param);
 	static int MqttRecParse(void* Param);
 };
+class MqttModbus :public MyAliyunMqtt {
 
+};
 #endif
