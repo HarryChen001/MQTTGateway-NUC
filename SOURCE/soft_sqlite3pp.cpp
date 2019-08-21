@@ -240,10 +240,9 @@ int MySqlite::GetAllInfo()
 		int enable = (*i).get<int>(1);
 		int mqttid = (*i).get<int>(2);
 		int uploadid = (*i).get<int>(3);
-		int devid = (*i).get<int>(4);
-		int varid = (*i).get<int>(5);
-		int Devid = (*i).get<int>(6);
-		std::string varname = (*i).get<const char*>(6);
+		int devid = (*i).get<int>(5);
+		int varid = (*i).get<int>(6);
+		std::string varname = (*i).get<const char*>(7);
 
 		for (int i = 0; i < ThemeUpload[0].UploadThemeqCount; i++)
 		{
