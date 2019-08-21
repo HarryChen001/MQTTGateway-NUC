@@ -42,19 +42,19 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: mqttgateway
+all: mqttgateway-v2.0
 
 # Tool invocations
-mqttgateway: $(OBJS) $(USER_OBJS)
+mqttgateway-v2.0: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Cross G++ Linker'
-	arm-linux-g++ -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libaliyun/lib" -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libmodbus/lib" -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libsqlite/lib" -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libglog/lib" -o "mqttgateway" $(OBJS) $(USER_OBJS) $(LIBS)
+	arm-linux-g++ -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libaliyun/lib" -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libmodbus/lib" -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libsqlite/lib" -L"/home/ccl/eclipse-workspace/mqttgateway/LIB/arm-linux/libglog/lib" -o "mqttgateway-v2.0" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(OBJS)$(C_UPPER_DEPS)$(CXX_DEPS)$(C_DEPS)$(CPP_DEPS) mqttgateway
+	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(OBJS)$(C_UPPER_DEPS)$(CXX_DEPS)$(C_DEPS)$(CPP_DEPS) mqttgateway-v2.0
 	-@echo ' '
 
 .PHONY: all clean dependents
