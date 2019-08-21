@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	FLAGS_logtostderr = 0;					//设置日志消息是否转到标准输出而不是日志文件
+	FLAGS_logtostderr = 1;					//设置日志消息是否转到标准输出而不是日志文件
 	FLAGS_alsologtostderr = 0;				//设置日志消息除了日志文件之外是否去标准输出
 	FLAGS_colorlogtostderr = 1;				//设置记录到标准输出的颜色消息（如果终端支持）
 	FLAGS_log_prefix = 1;					//设置日志前缀是否应该添加到每行输出
