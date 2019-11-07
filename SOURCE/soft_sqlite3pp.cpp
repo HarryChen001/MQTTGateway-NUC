@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include "glog/logging.h"
 
 using namespace sqlite3pp;
 using std::cout;
@@ -100,6 +101,7 @@ int MySqlite::GetAllInfo()
 	}
 	for (query::iterator i = qryPortParam.begin(); i != qryPortParam.end(); ++i)
 	{
+		static int subscribe = 0;
 		int portnums = (*i).get<int>(4);
 		int gpio = -1;
 		switch (portnums)
@@ -137,22 +139,27 @@ int MySqlite::GetAllInfo()
 			break;
 		}
 
-		Allinfo[portnums].portinfo.id = (*i).get<int>(0);
-		Allinfo[portnums].portinfo.PortId = (*i).get<int>(2);
-		Allinfo[portnums].portinfo.PortType = (*i).get<int>(3);
-		Allinfo[portnums].portinfo.PortNum = portnums;
-		Allinfo[portnums].portinfo.baud = (*i).get<int>(5);
-		strcpy(Allinfo[portnums].portinfo.Parity, (*i).get<const char*>(6));
-		Allinfo[portnums].portinfo.DataBits = (*i).get<int>(7);
-		Allinfo[portnums].portinfo.StopBits = (*i).get<int>(8);
-		Allinfo[portnums].portinfo.DelayTime = (*i).get<int>(9);
-		Allinfo[portnums].portinfo.gpio = gpio;
+		Allinfo[subscribe].portinfo.id = (*i).get<int>(0);
+		Allinfo[subscribe].portinfo.PortId = (*i).get<int>(2);
+		Allinfo[subscribe].portinfo.PortType = (*i).get<int>(3);
+		Allinfo[subscribe].portinfo.PortNum = portnums;
+		Allinfo[subscribe].portinfo.baud = (*i).get<int>(5);
+		strcpy(Allinfo[subscribe].portinfo.Parity, (*i).get<const char*>(6));
+		Allinfo[subscribe].portinfo.DataBits = (*i).get<int>(7);
+		Allinfo[subscribe].portinfo.StopBits = (*i).get<int>(8);
+		Allinfo[subscribe].portinfo.DelayTime = (*i).get<int>(9);
+		Allinfo[subscribe].portinfo.gpio = gpio;
+		Allinfo[subscribe].portinfo.isSerial = (*i).get<int>(10);
+		strcpy(Allinfo[subscribe].portinfo.ipaddr, (*i).get<const char*>(11));
+		Allinfo[subscribe].portinfo.ipport = (*i).get<int>(12);
+		subscribe++;
 	}
 	for (query::iterator i = qryDevParam.begin(); i != qryDevParam.end(); ++i)
 	{
+		LOG(INFO) << "GET Device Info" << endl;
 		int portid = (*i).get<int>(4);
 		int portnums = -1;
-		for (int i = 0; i < 11; i++)
+		for (int i = 0; i < SerialNums; i++)
 		{
 			if (portid == Allinfo[i].portinfo.PortId)
 			{
@@ -168,9 +175,9 @@ int MySqlite::GetAllInfo()
 
 		Allinfo[portnums].devcount++;
 	}
-	j = 0;
 	for (query::iterator i = qryThemeUpload.begin(); i != qryThemeUpload.end(); ++i)
 	{
+		LOG(INFO) << "GET ThemeUpload Info" << endl;
 		int* j = &ThemeUpload[0].UploadThemeqCount;
 		ThemeUpload[*j].id = (*i).get<int>(0);
 		ThemeUpload[*j].Enable = (*i).get<int>(1);
@@ -234,6 +241,7 @@ int MySqlite::GetAllInfo()
 
 		(*allvarcount)++;
 	}
+	LOG(INFO) << "Already Get Varparams" << endl << endl;
 	for (query::iterator i = qryThemeUploadList.begin(); i != qryThemeUploadList.end(); ++i)
 	{
 		int id = (*i).get<int>(0);
