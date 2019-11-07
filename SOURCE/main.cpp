@@ -209,20 +209,21 @@ int main(int argc, char* argv[])
 	db.GetAllInfo();
 	db.~MySqlite();
 
+	LOG(INFO)<<"Got all sqlite" << endl;
 	modbus newmodbus;
 	newmodbus.openmainthread();
 
 	MyAliyunMqtt Mqtt;
 
-	for(int i = 0 ; i < MqttInfo[0].MqttCount;i++)
+	for (int i = 0; i < MqttInfo[0].MqttCount; i++)
 	{
-		if(!MqttInfo[i].Enable)
+		if (!MqttInfo[i].Enable)
 			continue;
-		char* host		= MqttInfo[i].ServerLink;
-		char* clientid	= MqttInfo[i].ClientId;
-		char* username	= MqttInfo[i].UserName;
-		char* password	= MqttInfo[i].Password;
-		int port		= MqttInfo[i].ServerPort;
+		char* host = MqttInfo[i].ServerLink;
+		char* clientid = MqttInfo[i].ClientId;
+		char* username = MqttInfo[i].UserName;
+		char* password = MqttInfo[i].Password;
+		int port = MqttInfo[i].ServerPort;
 
 		MqttInfo[i].client = Mqtt.MqttInit(host, port, clientid, username, password);
 
@@ -252,7 +253,7 @@ int main(int argc, char* argv[])
 	}
 	for (int i = 0; i < ThemeCtrl[0].Ctrlcount; i++)
 	{
-		if(!ThemeCtrl[i].Enable)
+		if (!ThemeCtrl[i].Enable)
 			continue;
 		Mqtt.subscribe(ThemeCtrl[i].client, ThemeCtrl[i].CtrlSub, 0);
 	}
@@ -263,6 +264,7 @@ int main(int argc, char* argv[])
 		std::cin >> input;
 		if (input == 'q' || input == 'Q')
 		{
+			Mqtt.~MyAliyunMqtt();
 			google::ShutdownGoogleLogging();
 			return -1;
 		}
