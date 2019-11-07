@@ -15,6 +15,7 @@ public:
 	modbus();
 	~modbus();
 	void openmainthread();
+	void modbus_close(modbus_t*);
 private:
 	void modbus_set_double_to_int16(uint16_t buff[], double input);
 	double modbus_get_double_from_int16(uint16_t buff[]);

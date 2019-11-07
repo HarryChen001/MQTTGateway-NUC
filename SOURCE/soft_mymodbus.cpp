@@ -11,6 +11,7 @@
 #include <thread>
 
 #include "soft_myfunction.h"
+#include "soft_aliyunmqtt.h"
 #include "MyData.h"
 
 #include "cJSON/cJSON.h"
@@ -89,6 +90,10 @@ modbus::modbus()
 modbus::~modbus()
 {
 }
+void modbus::modbus_close(modbus_t* fd)
+{
+	modbus_close(fd);
+}
 void modbus::modbus_rtu_init()
 {
 #ifndef gcc
@@ -104,15 +109,31 @@ void modbus::modbus_rtu_init()
 #endif
 	for (unsigned int i = 0; i < sizeof(Allinfo) / sizeof(Allinfo_t); i++)
 	{
+		int ret = -1;
+		rts* setrts = NULL;
+		int portnums;
+		int baud;
+		int databits;
+		int stopbits;
+		char parity;
+		string serial;
+		if (Allinfo[i].portinfo.isSerial == 0)
+		{
+			Allinfo[i].fdmodbus = modbus_new_tcp(Allinfo[i].portinfo.ipaddr, Allinfo[i].portinfo.ipport);
+	//		modbus_set_error_recovery(Allinfo[i].fdmodbus, MODBUS_ERROR_RECOVERY_LINK);
+//			modbus_connect(Allinfo[i].fdmodbus);
+			goto modbustcp;
+			continue;
+		}
 		if (Allinfo[i].portinfo.PortNum == 0)
 			continue;
 
 		Allinfo[i].write_flag = false;
-		int portnums = Allinfo[i].portinfo.PortNum;
-		int baud = Allinfo[i].portinfo.baud;
-		int databits = Allinfo[i].portinfo.DataBits;
-		int stopbits = Allinfo[i].portinfo.StopBits;
-		char parity = Allinfo[i].portinfo.Parity[0];
+		portnums = Allinfo[i].portinfo.PortNum;
+		baud = Allinfo[i].portinfo.baud;
+		databits = Allinfo[i].portinfo.DataBits;
+		stopbits = Allinfo[i].portinfo.StopBits;
+		parity = Allinfo[i].portinfo.Parity[0];
 #ifdef gcc //ubuntu debug
 		if (portnums == 10)
 			portnums = 0;
@@ -134,17 +155,18 @@ void modbus::modbus_rtu_init()
 			portnums = 8;
 #endif
 
-		string serial = "/dev/ttyS" + std::to_string(portnums);
+		serial = "/dev/ttyS" + std::to_string(portnums);
 		Allinfo[i].fdmodbus = modbus_new_rtu(serial.c_str(), baud, parity, databits, stopbits);
-		modbus_set_debug(Allinfo[i].fdmodbus, modbus_debug);
+
 #ifndef gcc
-		int ret = -1;
+		ret = -1;
+		setrts = NULL;
+		ret = -1;
 		while (ret == -1 && Allinfo[i].portinfo.gpio != -1)
 		{
 			ret = modbus_rtu_set_rts(Allinfo[i].fdmodbus, MODBUS_RTU_RTS_UP);
 		}
 		ret = -1;
-		rts* setrts = NULL;
 		if (portnums == 10)
 			setrts = setrts_com1;
 		else if (portnums == 3)
@@ -168,16 +190,27 @@ void modbus::modbus_rtu_init()
 			ret = modbus_rtu_set_custom_rts(Allinfo[i].fdmodbus, setrts);
 		}
 #endif
+	modbustcp:
+		modbus_set_debug(Allinfo[i].fdmodbus, modbus_debug);
 		int rc = -1;
 		rc = modbus_connect(Allinfo[i].fdmodbus);
 		while (rc == -1)
 		{
+			static int nums = 0;
 			cout << "faile to connect" << endl;
-			exit(0);
+			nums++;
+			cout << "Retry times:" << nums << endl;
+			if (nums >= 10)
+			{
+				nums = 0;
+				printf("Conent to Modbus Failed:%s", Allinfo[i].portinfo.PortNum);
+				break;
+			}
+		//	exit(0);
 		}
-		unsigned int sec = 0;
-		unsigned int usec = 50000;
-		modbus_set_response_timeout(Allinfo[i].fdmodbus, sec, usec);
+		unsigned int sec = 1;
+		unsigned int usec = 0;
+	//	modbus_set_response_timeout(Allinfo[i].fdmodbus, sec, usec);
 	}
 }
 void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
@@ -250,6 +283,7 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 					regnums = 1;
 				}
 				int count = 0;
+				string varnametemp = vartemp->VarName;
 				while (rc == -1)
 				{
 					while (pallinfotemp->write_flag == true)
@@ -276,10 +310,12 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 						rc = modbus_read_input_bits(modbus, regadr, regnums, (uint8_t*)buff);
 					}
 					count++;
-					if (count >= 7)
+					if (count >= 5)
 					{
+						var[varnametemp] = 0;
 					//	cout << BOLDRED << vartemp->VarName << "read modbus timeout!" << endl << RESET;
 						LOG(WARNING) << vartemp->VarName << "read modbus timeout" << endl << endl;
+						modbus_connect(modbus);
 						break;
 					}
 				}
@@ -289,7 +325,6 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 				if (*datatypetemp != uint16 && *datatypetemp != int16 && *datatypetemp != bool_type)
 					ByteChange(buff, regnums, regendian, regbyteorder);
 
-				string varnametemp = vartemp->VarName;
 				if (*datatypetemp == uint16)
 				{
 					var[varnametemp] = (uint16_t)buff[0];
