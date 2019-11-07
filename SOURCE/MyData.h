@@ -8,12 +8,11 @@
 #include <map>
 
 #include "soft_mymodbus.h"
-#include "soft_aliyunmqtt.h"
 
 typedef void (rts)(modbus_t*, int);
 
 #define MqttConnect 10
-#define SerialNums 10
+#define SerialNums 20
 #define DeviceNums 10
 #define ThemeCtrlNums 10			//控制主题的数量
 #define ThemeUploadNums 10		//上传主题的数量
@@ -40,6 +39,12 @@ typedef void (rts)(modbus_t*, int);
 #define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
 #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
+#define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+
+#define TRACE (printf("[%s(%d)]-<%s>: ",__FILENAME__, __LINE__, __FUNCTION__), printf)
+
+//#define TRACE_INFO(fmt,...) printf("[%s(%d)]-<%s>: "fmt,__FILENAME__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
+
 enum enumdatatype {
 	bool_type, uint16, uint32, uint64, int16, int32, int64, float_type, double_type, data_no_type
 };
@@ -60,7 +65,9 @@ typedef struct _PortInfo_t {
 	int DelayTime;			//等待时间
 	char PortName[20];		//串口命名
 	int gpio;
-
+	int isSerial= -1;
+	char ipaddr[20];
+	int ipport;
 	int portcount;
 }PortInfo_t;
 
