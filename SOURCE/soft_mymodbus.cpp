@@ -315,7 +315,6 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 						var[varnametemp] = 0;
 					//	cout << BOLDRED << vartemp->VarName << "read modbus timeout!" << endl << RESET;
 						LOG(WARNING) << vartemp->VarName << "read modbus timeout" << endl << endl;
-						LOG(INFO) << "Reconnect status:"<< modbus_connect(modbus) << endl << endl;
 						modbus_connect(modbus);
 						break;
 					}
