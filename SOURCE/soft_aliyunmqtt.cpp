@@ -143,7 +143,9 @@ void MyAliyunMqtt::event_handle(void* pcontext, void* pclient, iotx_mqtt_event_m
  */
 MyAliyunMqtt::~MyAliyunMqtt()
 {
-
+	threadid.~thread();
+	threadid_interval.~thread();
+	threadid_recparse.~thread();
 }
 void* MyAliyunMqtt::MqttInit(char* host, int port, char* clientid, char* username, char* password)
 {
@@ -327,6 +329,14 @@ int MyAliyunMqtt::openrecparsethread()
 	threadid_recparse = std::thread(MqttRecParse, this);
 	return 0;
 }
+int MyAliyunMqtt::openuploadthread()
+{
+	for (int i = 0; i < ThemeUpload[0].UploadThemeqCount; i++)
+	{
+		threadid_uploadtheme[i] = std::thread(MqttUpload, this, &ThemeUpload[i]);
+	}
+	return 0;
+}
 int MyAliyunMqtt::MqttMain(void* Params)
 {
 #ifndef gcc
@@ -351,6 +361,9 @@ int MyAliyunMqtt::MqttMain(void* Params)
 
 	point->openintervalthread();		//create MQTT interval thread
 	point->openrecparsethread();		//create thread----parse the receive data
+	point->openuploadthread();
+
+	while (1);
 	time_t nowtime;
 	cJSON* publish_json;
 	cJSON* params_json;
@@ -393,6 +406,65 @@ int MyAliyunMqtt::MqttMain(void* Params)
 				cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
 			}
 		}
+		for (int i = 0; i < ThemeUpload[0].UploadThemeqCount; i++)
+		{
+			for (int j = 0; j < ThemeUpload[i].varcount; j++)
+			{
+				if (ThemeUpload[i].Enable == 0)
+					continue;
+				string varname = ThemeUpload[i].varname[j];
+				if (varname.empty())
+					continue;
+				var[varname] = 0;
+			}
+		}
 		sleep(ThemeUpload[0].PubPeriod);
 	}
+}
+int MyAliyunMqtt::MqttUpload(void* Param,void* ThemeUpload)
+{
+	MyAliyunMqtt* point = (MyAliyunMqtt*)Param;
+	ThemeUpload_t* ThemeUploadParam = (ThemeUpload_t*)ThemeUpload;
+	cout << ThemeUploadParam->id << endl;
+	time_t nowtime;
+	cJSON* publish_json;
+	cJSON* params_json;
+	char tmp[64];
+	while (1)
+	{
+		nowtime = time(NULL); //get now time
+		strftime(tmp, sizeof(tmp), "%Y%m%d%H%M%S", localtime(&nowtime));
+
+		publish_json = cJSON_CreateObject();
+
+		cJSON_AddStringToObject(publish_json, "id", tmp);
+		cJSON_AddStringToObject(publish_json, "method", "method.event.property.post");
+		cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
+
+		int alluploadvarcount_temp = 0;	//记录已经上传的变量的数量
+		for (int j = 0; j < ThemeUploadParam->varcount; j++)
+		{
+			if (ThemeUploadParam->Enable == 0)
+				continue;
+			string varname = ThemeUploadParam->varname[j];
+			if (varname.empty())
+				continue;
+			double value = var[varname];
+			cJSON_AddNumberToObject(params_json, varname.c_str(), value);
+			alluploadvarcount_temp++;
+			//检查变量数量是否到达设定的数量或者该设备下已无可读变量，是则上发数据到指定主题
+			if ((alluploadvarcount_temp % uploadperiod) \
+				&& alluploadvarcount_temp != ThemeUploadParam->varcount)
+			{
+				continue;
+			}
+			alluploadvarcount_temp = 0;
+			point->publish(ThemeUploadParam->client, ThemeUploadParam->CtrlPub, ThemeUploadParam->QosPub, cJSON_PrintUnformatted(publish_json));
+
+			cJSON_DeleteItemFromObject(publish_json, "params");
+			cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
+		}
+		sleep(ThemeUploadParam->PubPeriod);
+	}
+	return 0;
 }
