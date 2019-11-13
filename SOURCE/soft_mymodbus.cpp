@@ -161,7 +161,6 @@ void modbus::modbus_rtu_init()
 #ifndef gcc
 		ret = -1;
 		setrts = NULL;
-		ret = -1;
 		while (ret == -1 && Allinfo[i].portinfo.gpio != -1)
 		{
 			ret = modbus_rtu_set_rts(Allinfo[i].fdmodbus, MODBUS_RTU_RTS_UP);
@@ -286,10 +285,13 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 				string varnametemp = vartemp->VarName;
 				while (rc == -1)
 				{
-					while (pallinfotemp->write_flag == true)
+					if(pallinfotemp->write_flag == true)
 					{
-						cout << "Writing" << endl;
-						sleep(1);
+						while (pallinfotemp->write_flag == true)
+						{
+							cout << "Writing:/dev/ttyS" << pallinfotemp->portinfo.PortNum << endl;
+							sleep(1);
+						}
 					}
 					if (regtypetemp == "W3")
 					{
@@ -314,8 +316,8 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 					{
 						var[varnametemp] = 0;
 					//	cout << BOLDRED << vartemp->VarName << "read modbus timeout!" << endl << RESET;
-						LOG(WARNING) << vartemp->VarName << "read modbus timeout" << endl << endl;
-						modbus_connect(modbus);
+						LOG(WARNING) << vartemp->VarName << "read modbus timeout" << endl;
+						LOG(INFO) << "Reconnect status:"<< modbus_connect(modbus) << endl << endl;
 						break;
 					}
 				}
@@ -363,7 +365,7 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 				}
 			}
 		}
-		sleep(1);
+		sleep(2);
 	}
 }
 void modbus::modbus_write_thead(modbus* params)
