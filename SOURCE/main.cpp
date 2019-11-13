@@ -52,6 +52,8 @@ std::map<std::string, double>var;
 std::queue<Varinfo_t>queue_var_write;
 std::queue<MessageInfo_t>queueMessageInfo;
 
+#define Version "2019/11/22"
+
 #define BASE64_ENCODE_TEST
 #define BASE64_DECODE_TEST
 #define SERIAL_TEST
@@ -87,7 +89,7 @@ int main(int argc, char* argv[])
 	google::SetLogFilenameExtension("");					//在日志文件名中级别后添加一个扩展名。适用于所有严重级别
 	google::SetStderrLogging(google::INFO);				//大于指定级别的日志都输出到标准输出
 
-	LOG(INFO) << "Start Work!" << endl << endl;
+	LOG(INFO) << "Start Work! Version :" << Version << endl << endl;
 #ifdef BASE64_ENCODE_TEST
 	if (!strcmp("base64encode", argv[1]))
 		while (1)
