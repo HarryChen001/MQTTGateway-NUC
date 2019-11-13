@@ -192,6 +192,10 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 {
 	MyAliyunMqtt* point = (MyAliyunMqtt*)Params;
 	Serial s;
+	int baud = 0;
+	int databits = 0;
+	char parity=0;
+	int stopbits = 0;
 	while (1)
 	{
 		if (!queueMessageInfo.empty())
@@ -239,6 +243,44 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				char dev[100];
 				char dest[1024];
 				char readbuff[1024];
+				Allinfo_t* pallinfotemp;
+				int nums = sizeof(Allinfo) / sizeof(Allinfo_t);
+				for (int i = 0; i < nums; i++)
+				{
+					int portnums = Allinfo[i].portinfo.PortNum;
+
+					if (portnums == 10)
+						portnums = 1;
+					else if (portnums == 3)
+						portnums = 2;
+					else if (portnums == 9)
+						portnums = 3;
+					else if (portnums == 1)
+						portnums = 4;
+					else if (portnums == 6)
+						portnums = 5;
+					else if (portnums == 7)
+						portnums = 6;
+					else if (portnums == 2)
+						portnums = 7;
+					else if (portnums == 8)
+						portnums = 8;
+					else if (portnums == 4)
+						portnums = 9;
+
+					if (com == portnums)
+					{
+						baud = Allinfo[i].portinfo.baud;
+						databits = Allinfo[i].portinfo.DataBits;
+						stopbits = Allinfo[i].portinfo.StopBits;
+						parity = Allinfo[i].portinfo.Parity[0];
+						pallinfotemp = &Allinfo[i];
+						pallinfotemp->write_flag = true;
+//						Allinfo[i].write_flag = true;
+						cout << Allinfo[i].portinfo.PortNum << endl;
+						break;
+					}
+				}
 #ifndef gcc
 				int gpio = (com == 1) ? 46 : (com == 2) ? 103 : (com == 3) ? 102 : (com == 4) ? 132 : (com == 5) ? 32 : -1;
 				com = (com == 1) ? 10 : (com == 2) ? 3 : (com == 3) ? 9 : (com == 4) ? 1 : (com == 5) ? 6 : com;
@@ -260,12 +302,13 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 
 				int len = Base64decode(dest, json_payload->valuestring);
 
-				s.open(dev, 115200, 8, 'N', 1);
-
-				s.write(dest, len);
+				s.open(dev, baud, databits, parity, stopbits);
+				s.write(dest,len);
 #ifndef gcc
 				if (gpio != -1)
 				{
+					usleep(10000);
+					pallinfotemp->write_flag = false;
 					gpiovalue(gpio, 0);
 				}
 #endif
@@ -425,7 +468,6 @@ int MyAliyunMqtt::MqttUpload(void* Param,void* ThemeUpload)
 {
 	MyAliyunMqtt* point = (MyAliyunMqtt*)Param;
 	ThemeUpload_t* ThemeUploadParam = (ThemeUpload_t*)ThemeUpload;
-	cout << ThemeUploadParam->id << endl;
 	time_t nowtime;
 	cJSON* publish_json;
 	cJSON* params_json;
