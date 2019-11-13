@@ -55,7 +55,6 @@ int MySqlite::selectfrom(char* tablename, char* format, ...)
 }
 int MySqlite::GetAllInfo()
 {
-	int j = 0;
 	query qryDevParam(db, "SELECT * FROM DevParam");
 	query qryMqttParam(db, "SELECT * FROM MqttParam");
 	query qryPortParam(db, "SELECT * FROM PortParam");
@@ -244,9 +243,6 @@ int MySqlite::GetAllInfo()
 	LOG(INFO) << "Already Get Varparams" << endl << endl;
 	for (query::iterator i = qryThemeUploadList.begin(); i != qryThemeUploadList.end(); ++i)
 	{
-		int id = (*i).get<int>(0);
-		int enable = (*i).get<int>(1);
-		int mqttid = (*i).get<int>(2);
 		int uploadid = (*i).get<int>(3);
 		int devid = (*i).get<int>(5);
 		int varid = (*i).get<int>(6);
@@ -299,6 +295,7 @@ int MySqlite::GetAllInfo()
 	qryThemeCtrl.finish();
 	qryThemeUpload.finish();
 	qryThemeUploadList.finish();
+	return 0;
 }
 int MySqlite::GetCountFromTable(char* tablename)
 {
