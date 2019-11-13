@@ -72,7 +72,8 @@ void ByteChange(uint16_t* buff, int nums, int endian, int byteorder)
 			temp = buff[nums - 1 - i];
 			buff[nums - 1 - i] = buff[i];
 			buff[i] = temp;
-			buff[nums - 1 - i] = (buff[nums - 1 - i] << 8 | buff[nums - 1 - i] >> 8);
+			buff[nums - 1 - i] = (buff[nums - 1 - i] << 8
+					| buff[nums - 1 - i] >> 8);
 			buff[i] = (buff[i] << 8 | buff[i] >> 8);
 		}
 	}
@@ -119,8 +120,9 @@ void modbus::modbus_rtu_init()
 		string serial;
 		if (Allinfo[i].portinfo.isSerial == 0)
 		{
-			Allinfo[i].fdmodbus = modbus_new_tcp(Allinfo[i].portinfo.ipaddr, Allinfo[i].portinfo.ipport);
-	//		modbus_set_error_recovery(Allinfo[i].fdmodbus, MODBUS_ERROR_RECOVERY_LINK);
+			Allinfo[i].fdmodbus = modbus_new_tcp(Allinfo[i].portinfo.ipaddr,
+					Allinfo[i].portinfo.ipport);
+			//		modbus_set_error_recovery(Allinfo[i].fdmodbus, MODBUS_ERROR_RECOVERY_LINK);
 //			modbus_connect(Allinfo[i].fdmodbus);
 			goto modbustcp;
 			continue;
@@ -136,27 +138,28 @@ void modbus::modbus_rtu_init()
 		parity = Allinfo[i].portinfo.Parity[0];
 #ifdef gcc //ubuntu debug
 		if (portnums == 10)
-			portnums = 0;
+		portnums = 0;
 		else if (portnums == 3)
-			portnums = 1;
+		portnums = 1;
 		else if (portnums == 9)
-			portnums = 2;
+		portnums = 2;
 		else if (portnums == 1)
-			portnums = 3;
+		portnums = 3;
 		else if (portnums == 6)
-			portnums = 4;
+		portnums = 4;
 		else if (portnums == 7)
-			portnums = 5;
+		portnums = 5;
 		else if (portnums == 2)
-			portnums = 6;
+		portnums = 6;
 		else if (portnums == 8)
-			portnums = 7;
+		portnums = 7;
 		else if (portnums == 4)
-			portnums = 8;
+		portnums = 8;
 #endif
 
 		serial = "/dev/ttyS" + std::to_string(portnums);
-		Allinfo[i].fdmodbus = modbus_new_rtu(serial.c_str(), baud, parity, databits, stopbits);
+		Allinfo[i].fdmodbus = modbus_new_rtu(serial.c_str(), baud, parity,
+				databits, stopbits);
 
 #ifndef gcc
 		ret = -1;
@@ -189,8 +192,7 @@ void modbus::modbus_rtu_init()
 			ret = modbus_rtu_set_custom_rts(Allinfo[i].fdmodbus, setrts);
 		}
 #endif
-	modbustcp:
-		modbus_set_debug(Allinfo[i].fdmodbus, modbus_debug);
+		modbustcp: modbus_set_debug(Allinfo[i].fdmodbus, modbus_debug);
 		int rc = -1;
 		rc = modbus_connect(Allinfo[i].fdmodbus);
 		while (rc == -1)
@@ -202,19 +204,20 @@ void modbus::modbus_rtu_init()
 			if (nums >= 10)
 			{
 				nums = 0;
-				printf("Conent to Modbus Failed:%s", Allinfo[i].portinfo.PortNum);
+				printf("Conent to Modbus Failed:%s",
+						Allinfo[i].portinfo.PortNum);
 				break;
 			}
-		//	exit(0);
+			//	exit(0);
 		}
 		unsigned int sec = 1;
 		unsigned int usec = 0;
-	//	modbus_set_response_timeout(Allinfo[i].fdmodbus, sec, usec);
+		//	modbus_set_response_timeout(Allinfo[i].fdmodbus, sec, usec);
 	}
 }
 void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 {
-	LOG(INFO) << "Modbus read thread : Start work! Serial is " << pallinfotemp->portinfo.PortNum << endl << endl;
+	LOG(INFO)<< "Modbus read thread : Start work! Serial is " << pallinfotemp->portinfo.PortNum << endl << endl;
 	modbus_t* modbus = pallinfotemp->fdmodbus;
 	uint16_t buff[10];
 	while (1)
@@ -222,7 +225,7 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 		for (int j = 0; j < pallinfotemp->devcount; j++)
 		{
 			if (pallinfotemp->deviceinfo[j].id == 0)
-				continue;
+			continue;
 			int regendian = pallinfotemp->deviceinfo[j].regedian;
 			int regbyteorder = pallinfotemp->deviceinfo[j].byteorder;
 			modbus_set_slave(modbus, pallinfotemp->deviceinfo[j].address);
@@ -315,17 +318,17 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 					if (count >= 5)
 					{
 						var[varnametemp] = 0;
-					//	cout << BOLDRED << vartemp->VarName << "read modbus timeout!" << endl << RESET;
+						//	cout << BOLDRED << vartemp->VarName << "read modbus timeout!" << endl << RESET;
 						LOG(WARNING) << vartemp->VarName << "read modbus timeout" << endl;
 						LOG(INFO) << "Reconnect status:"<< modbus_connect(modbus) << endl << endl;
 						break;
 					}
 				}
 				if (rc == -1)
-					continue;
+				continue;
 
 				if (*datatypetemp != uint16 && *datatypetemp != int16 && *datatypetemp != bool_type)
-					ByteChange(buff, regnums, regendian, regbyteorder);
+				ByteChange(buff, regnums, regendian, regbyteorder);
 
 				if (*datatypetemp == uint16)
 				{
@@ -370,12 +373,12 @@ void modbus::modbus_read_thread(modbus* params, struct _Allinfo_t* pallinfotemp)
 }
 void modbus::modbus_write_thead(modbus* params)
 {
-	LOG(INFO) << "Modbus write thread : Start work!" << endl << endl;
+	LOG(INFO)<< "Modbus write thread : Start work!" << endl << endl;
 	MyAliyunMqtt tempMqtt;
 	while (1)
 	{
 		if (!queue_var_write.empty())
-			cout << endl;
+		cout << endl;
 		while (!queue_var_write.empty())
 		{
 			string rec_varname = queue_var_write.front().varname;
@@ -463,11 +466,11 @@ void modbus::modbus_write_thead(modbus* params)
 									rc = modbus_write_bit(modbus, regadr, rec_value);
 								}
 								else
-									rc = modbus_write_and_read_registers(modbus, regadr, regnums, tempbuff, regadr, regnums, temp);
+								rc = modbus_write_and_read_registers(modbus, regadr, regnums, tempbuff, regadr, regnums, temp);
 								if(rc == -1)
-									continue;
+								continue;
 								if (str_datatypetemp != "uint16" && str_datatypetemp != "int16" && str_datatypetemp != "bool")
-									ByteChange(temp, regnums, regendian, regbyteorder);
+								ByteChange(temp, regnums, regendian, regbyteorder);
 
 								string varnametemp = varparamstemp->VarName;
 								double value = 0;
@@ -554,7 +557,8 @@ void modbus::openmainthread()
 			}
 			if (varcount == 0)
 				continue;
-			modbus_read_threadid[i] = std::thread(modbus_read_thread, this, &Allinfo[i]);
+			modbus_read_threadid[i] = std::thread(modbus_read_thread, this,
+					&Allinfo[i]);
 		}
 	}
 	modbus_write_threadid = std::thread(modbus_write_thead, this);

@@ -14,11 +14,11 @@
 using std::cout;
 using std::endl;
 
-int getportinfosubscript(PortInfo_t* param,int portnums)
+int getportinfosubscript(PortInfo_t* param, int portnums)
 {
-	for(int i = 0; i < param[0].portcount;i++)
+	for (int i = 0; i < param[0].portcount; i++)
 	{
-		if(portnums == param[i].PortNum)
+		if (portnums == param[i].PortNum)
 		{
 			return i;
 		}
@@ -29,12 +29,12 @@ void gpioexport(int gpio)
 {
 	char buff[100] = "/sys/class/gpio/export";
 	FILE* fp = NULL;
-	while(fp==NULL)
+	while (fp == NULL)
 	{
-		fp = fopen(buff,"a");
-		if(fp != NULL)
+		fp = fopen(buff, "a");
+		if (fp != NULL)
 		{
-			fprintf(fp,std::to_string(gpio).c_str());
+			fprintf(fp, std::to_string(gpio).c_str());
 			fclose(fp);
 			break;
 		}
@@ -43,30 +43,30 @@ void gpioexport(int gpio)
 void gpiooutput(int gpio)
 {
 	char buff[100];
-	sprintf(buff,"/sys/class/gpio/gpio%d/direction",gpio);
+	sprintf(buff, "/sys/class/gpio/gpio%d/direction", gpio);
 	FILE* fp = NULL;
-	while(fp == NULL)
+	while (fp == NULL)
 	{
-		fp = fopen(buff,"a");
-		if(fp != NULL)
+		fp = fopen(buff, "a");
+		if (fp != NULL)
 		{
-			fprintf(fp,"out");
+			fprintf(fp, "out");
 			fclose(fp);
 			break;
 		}
 	}
 }
-void gpiovalue(int gpio,int value)
+void gpiovalue(int gpio, int value)
 {
 	FILE* fp = NULL;
 	char buff[100];
-	sprintf(buff,"/sys/class/gpio/gpio%d/value",gpio);
-	while(fp == NULL)
+	sprintf(buff, "/sys/class/gpio/gpio%d/value", gpio);
+	while (fp == NULL)
 	{
-		fp = fopen(buff,"a");
-		if(fp != NULL)
+		fp = fopen(buff, "a");
+		if (fp != NULL)
 		{
-			fprintf(fp,std::to_string(value).c_str());
+			fprintf(fp, std::to_string(value).c_str());
 			fclose(fp);
 			break;
 		}

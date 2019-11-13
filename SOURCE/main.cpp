@@ -48,9 +48,9 @@ enumdatatype datatype;
 Allinfo_t Allinfo[20];
 Varinfo_t varinfo;
 
-std::map<std::string, double>var;
-std::queue<Varinfo_t>queue_var_write;
-std::queue<MessageInfo_t>queueMessageInfo;
+std::map<std::string, double> var;
+std::queue<Varinfo_t> queue_var_write;
+std::queue<MessageInfo_t> queueMessageInfo;
 
 #define Version "2019/11/22"
 
@@ -61,7 +61,7 @@ std::queue<MessageInfo_t>queueMessageInfo;
 
 void sign_handle(int signum)
 {
-	LOG(WARNING) << "Program stop by User" << endl << endl;
+	LOG(WARNING)<< "Program stop by User" << endl << endl;
 	google::ShutdownGoogleLogging();
 	exit(0);
 }
@@ -85,11 +85,11 @@ int main(int argc, char* argv[])
 	FLAGS_log_dir = "./logdir";
 
 	google::InitGoogleLogging("LOG");
-	google::SetLogDestination(google::GLOG_INFO, "LOG");	//设置特定严重级别的日志的输出目录和前缀。第一个参数为日志级别，第二个参数表示输出目录及日志文件名前缀
-	google::SetLogFilenameExtension("");					//在日志文件名中级别后添加一个扩展名。适用于所有严重级别
+	google::SetLogDestination(google::GLOG_INFO, "LOG");//设置特定严重级别的日志的输出目录和前缀。第一个参数为日志级别，第二个参数表示输出目录及日志文件名前缀
+	google::SetLogFilenameExtension("");		//在日志文件名中级别后添加一个扩展名。适用于所有严重级别
 	google::SetStderrLogging(google::INFO);				//大于指定级别的日志都输出到标准输出
 
-	LOG(INFO) << "Start Work! Version :" << Version << endl << endl;
+	LOG(INFO)<< "Start Work! Version :" << Version << endl << endl;
 #ifdef BASE64_ENCODE_TEST
 	if (!strcmp("base64encode", argv[1]))
 		while (1)
@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
 			cin.getline(buff, 1024);
 			int base64data_length = strlen(buff);
 			int encoded_data_length = Base64encode_len(base64data_length);
-			char* base64_string = (char*)malloc(encoded_data_length);
+			char* base64_string = (char*) malloc(encoded_data_length);
 			Base64encode(base64_string, buff, base64data_length);
 			cout << base64_string << endl;
 			free(base64_string);
@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
 			}
 			int base64data_length = 8 * sizeof(char);
 			int encoded_data_length = Base64encode_len(base64data_length);
-			char* base64_string = (char*)malloc(encoded_data_length);
+			char* base64_string = (char*) malloc(encoded_data_length);
 			Base64encode(base64_string, buff, base64data_length);
 			cout << base64_string << endl;
 			free(base64_string);
@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
 	std::string str = argv[1];
 	if (str.find("conf", 0) == string::npos)
 	{
-		LOG(FATAL) << "NO CONF!" << endl;
+		LOG(FATAL)<< "NO CONF!" << endl;
 	}
 	MySqlite db(argv[1]);
 	db.GetAllInfo();
@@ -227,7 +227,8 @@ int main(int argc, char* argv[])
 		char* password = MqttInfo[i].Password;
 		int port = MqttInfo[i].ServerPort;
 
-		MqttInfo[i].client = Mqtt.MqttInit(host, port, clientid, username, password);
+		MqttInfo[i].client = Mqtt.MqttInit(host, port, clientid, username,
+				password);
 
 		for (int j = 0; j < ThemeCtrl[0].Ctrlcount; j++)
 		{
@@ -249,8 +250,9 @@ int main(int argc, char* argv[])
 			size_t pos = temp.find('&', 0);
 			MqttInfo[i].DeviceName = temp.substr(0, pos);
 			MqttInfo[i].ProductName = temp.substr(pos + 1);
-			string rrpc_topic = "/sys/" + MqttInfo[i].ProductName + "/" + MqttInfo[i].DeviceName + "/rrpc/request/+";
-			Mqtt.subscribe(ThemeCtrl[i].client, (char*)rrpc_topic.c_str(), 0);
+			string rrpc_topic = "/sys/" + MqttInfo[i].ProductName + "/"
+					+ MqttInfo[i].DeviceName + "/rrpc/request/+";
+			Mqtt.subscribe(ThemeCtrl[i].client, (char*) rrpc_topic.c_str(), 0);
 		}
 	}
 	for (int i = 0; i < ThemeCtrl[0].Ctrlcount; i++)

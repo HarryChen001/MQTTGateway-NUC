@@ -27,10 +27,11 @@ using std::string;
 using std::map;
 using std::queue;
 
-void MyAliyunMqtt::message_arrive(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg)
+void MyAliyunMqtt::message_arrive(void* pcontext, void* pclient,
+		iotx_mqtt_event_msg_pt msg)
 {
-	MyAliyunMqtt* pointer = (MyAliyunMqtt*)pcontext;
-	iotx_mqtt_topic_info_t* topic_info = (iotx_mqtt_topic_info_pt)msg->msg;
+	MyAliyunMqtt* pointer = (MyAliyunMqtt*) pcontext;
+	iotx_mqtt_topic_info_t* topic_info = (iotx_mqtt_topic_info_pt) msg->msg;
 	switch (msg->event_type)
 	{
 	case IOTX_MQTT_EVENT_PUBLISH_RECEIVED:
@@ -42,7 +43,7 @@ void MyAliyunMqtt::message_arrive(void* pcontext, void* pclient, iotx_mqtt_event
 		temp.client = pclient;
 		queueMessageInfo.push(temp);
 
-		LOG(INFO) << "GET Message from: " << temp.TopicName << endl << "Message Payload is : " << temp.Message << endl;
+		LOG(INFO)<< "GET Message from: " << temp.TopicName << endl << "Message Payload is : " << temp.Message << endl;
 
 		break;
 	}
@@ -65,11 +66,12 @@ int MyAliyunMqtt::subscribe(void* client, char* subscribetopic, int Qos)
 		printf("Unsupport Qos Setting!\n");
 		return -1;
 	}
-	LOG(INFO) << "Subscribe Topic is: " << subscribetopic << endl << endl;
-	res = IOT_MQTT_Subscribe(client, subscribetopic, iotx_qos, message_arrive, this);
+	LOG(INFO)<< "Subscribe Topic is: " << subscribetopic << endl << endl;
+	res = IOT_MQTT_Subscribe(client, subscribetopic, iotx_qos, message_arrive,
+			this);
 	if (res < 0)
 	{
-		LOG(WARNING) << "Subscribe Topic Fail" << endl << endl;
+		LOG(WARNING)<< "Subscribe Topic Fail" << endl << endl;
 		cout << BOLDRED << "Subscribe Topic fail!" << RESET << endl;
 	}
 	else
@@ -78,7 +80,8 @@ int MyAliyunMqtt::subscribe(void* client, char* subscribetopic, int Qos)
 	}
 	return 0;
 }
-int MyAliyunMqtt::publish(void* client, char* publishtopic, int Qos, char* json_payload)
+int MyAliyunMqtt::publish(void* client, char* publishtopic, int Qos,
+		char* json_payload)
 {
 	int res = -1;
 	iotx_mqtt_topic_info_t topic_msg;
@@ -89,22 +92,24 @@ int MyAliyunMqtt::publish(void* client, char* publishtopic, int Qos, char* json_
 	topic_msg.payload_len = strlen(json_payload);
 	res = IOT_MQTT_Publish(client, publishtopic, &topic_msg);
 
-	LOG(INFO) << "Publish to topic : " << publishtopic << endl << endl;
+	LOG(INFO)<< "Publish to topic : " << publishtopic << endl << endl;
 	if (res < 0)
 	{
-		LOG(WARNING) << "FAILED to publish.Payload is : " << json_payload << endl << endl;
+		LOG(WARNING)<< "FAILED to publish.Payload is : " << json_payload << endl << endl;
 
 		return -1;
 	}
-	LOG(INFO) << "SUCCESS! Payload is ->" << json_payload << endl << endl;
+	LOG(INFO)<< "SUCCESS! Payload is ->" << json_payload << endl << endl;
 
 	return 0;
 }
-int MyAliyunMqtt::publish_cjson(void* client,char* publishtopic, int Qos, cJSON* json_payload)
+int MyAliyunMqtt::publish_cjson(void* client, char* publishtopic, int Qos,
+		cJSON* json_payload)
 {
 	int res = -1;
 	iotx_mqtt_topic_info_t topic_msg;
-	char* publish_payload = (char*)malloc(strlen(cJSON_Print(json_payload)) + 1);
+	char* publish_payload = (char*) malloc(
+			strlen(cJSON_Print(json_payload)) + 1);
 
 	publish_payload = cJSON_PrintUnformatted(json_payload);
 	topic_msg.qos = Qos;
@@ -114,18 +119,19 @@ int MyAliyunMqtt::publish_cjson(void* client,char* publishtopic, int Qos, cJSON*
 	topic_msg.payload_len = strlen(publish_payload);
 	res = IOT_MQTT_Publish(client, publishtopic, &topic_msg);
 
-	LOG(INFO) << "Publish to topic : " << publishtopic << endl << endl;
+	LOG(INFO)<< "Publish to topic : " << publishtopic << endl << endl;
 	if (res < 0)
 	{
-		LOG(WARNING) << "FAILED to publish.Payload is : " << publish_payload << endl << endl;
+		LOG(WARNING)<< "FAILED to publish.Payload is : " << publish_payload << endl << endl;
 		free(publish_payload);
 		return -1;
 	}
-	LOG(INFO) << "SUCCESS! Payload is ->" <<  publish_payload << endl << endl;
+	LOG(INFO)<< "SUCCESS! Payload is ->" << publish_payload << endl << endl;
 	free(publish_payload);
 	return 0;
 }
-void MyAliyunMqtt::event_handle(void* pcontext, void* pclient, iotx_mqtt_event_msg_pt msg)
+void MyAliyunMqtt::event_handle(void* pcontext, void* pclient,
+		iotx_mqtt_event_msg_pt msg)
 {
 }
 
@@ -147,9 +153,10 @@ MyAliyunMqtt::~MyAliyunMqtt()
 	threadid_interval.~thread();
 	threadid_recparse.~thread();
 }
-void* MyAliyunMqtt::MqttInit(char* host, int port, char* clientid, char* username, char* password)
+void* MyAliyunMqtt::MqttInit(char* host, int port, char* clientid,
+		char* username, char* password)
 {
-	iotx_mqtt_param_t       mqtt_params;
+	iotx_mqtt_param_t mqtt_params;
 	memset(&mqtt_params, 0x0, sizeof(mqtt_params));
 	mqtt_params.write_buf_size = 2048;
 	mqtt_params.read_buf_size = 2048;
@@ -190,11 +197,11 @@ int MyAliyunMqtt::MqttInterval(void* Params)
 }
 int MyAliyunMqtt::MqttRecParse(void* Params)
 {
-	MyAliyunMqtt* point = (MyAliyunMqtt*)Params;
+	MyAliyunMqtt* point = (MyAliyunMqtt*) Params;
 	Serial s;
 	int baud = 0;
 	int databits = 0;
-	char parity=0;
+	char parity = 0;
 	int stopbits = 0;
 	while (1)
 	{
@@ -204,7 +211,7 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 		}
 		while (!queueMessageInfo.empty())
 		{
-			cJSON* json, * json_params;
+			cJSON* json, *json_params;
 			void* client = queueMessageInfo.front().client;
 			string jsonPayload = queueMessageInfo.front().Message;
 			string topicname = queueMessageInfo.front().TopicName;
@@ -213,7 +220,8 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 
 			size_t pos = topicname.find("request", 0);
 			if (pos != string::npos)
-				varinfo.topicname = topicname.substr(0, pos) + "response" + topicname.substr(pos + strlen("request"));
+				varinfo.topicname = topicname.substr(0, pos) + "response"
+						+ topicname.substr(pos + strlen("request"));
 			else
 			{
 				for (int i = 0; i < ThemeCtrl[0].Ctrlcount; i++)
@@ -282,8 +290,11 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 					}
 				}
 #ifndef gcc
-				int gpio = (com == 1) ? 46 : (com == 2) ? 103 : (com == 3) ? 102 : (com == 4) ? 132 : (com == 5) ? 32 : -1;
-				com = (com == 1) ? 10 : (com == 2) ? 3 : (com == 3) ? 9 : (com == 4) ? 1 : (com == 5) ? 6 : com;
+				int gpio = (com == 1) ? 46 : (com == 2) ? 103 :
+							(com == 3) ? 102 : (com == 4) ? 132 :
+							(com == 5) ? 32 : -1;
+				com = (com == 1) ? 10 : (com == 2) ? 3 : (com == 3) ? 9 :
+						(com == 4) ? 1 : (com == 5) ? 6 : com;
 				if (gpio != -1)
 				{
 					gpioexport(gpio);
@@ -297,13 +308,14 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				int ComIsResp = cJSON_GetObjectItem(json, "ComIsResp")->valueint;
 				int serialtimeout = 0;
 				if (ComIsResp)
-					serialtimeout = cJSON_GetObjectItem(json, "ComTimeoutMs")->valueint;
+					serialtimeout =
+							cJSON_GetObjectItem(json, "ComTimeoutMs")->valueint;
 				sprintf(dev, "%s%d", "/dev/ttyS", com);
 
 				int len = Base64decode(dest, json_payload->valuestring);
 
 				s.open(dev, baud, databits, parity, stopbits);
-				s.write(dest,len);
+				s.write(dest, len);
 #ifndef gcc
 				if (gpio != -1)
 				{
@@ -348,7 +360,8 @@ int MyAliyunMqtt::MqttRecParse(void* Params)
 				int Qos = 0;
 				if (topicname.find("/respone/") == string::npos)
 					Qos = 1;
-				point->publish(client, (char*)varinfo.topicname.c_str(), Qos, payload);
+				point->publish(client, (char*) varinfo.topicname.c_str(), Qos,
+						payload);
 
 				cJSON_Delete(response);
 			}
@@ -376,7 +389,8 @@ int MyAliyunMqtt::openuploadthread()
 {
 	for (int i = 0; i < ThemeUpload[0].UploadThemeqCount; i++)
 	{
-		threadid_uploadtheme[i] = std::thread(MqttUpload, this, &ThemeUpload[i]);
+		threadid_uploadtheme[i] = std::thread(MqttUpload, this,
+				&ThemeUpload[i]);
 	}
 	return 0;
 }
@@ -393,20 +407,23 @@ int MyAliyunMqtt::MqttMain(void* Params)
 			char buff[100];
 			sprintf(buff, "%s%d%s", "echo ", gpio, " > /sys/class/gpio/export");
 			system(buff);
-			sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", gpio, "/direction");
+			sprintf(buff, "%s%d%s", "echo out > /sys/class/gpio/gpio", gpio,
+					"/direction");
 			system(buff);
-			sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", gpio, "/value");
+			sprintf(buff, "%s%d%s", "echo 1 > /sys/class/gpio/gpio", gpio,
+					"/value");
 			system(buff);
 		}
 	}
 #endif
-	MyAliyunMqtt* point = (MyAliyunMqtt*)Params;
+	MyAliyunMqtt* point = (MyAliyunMqtt*) Params;
 
 	point->openintervalthread();		//create MQTT interval thread
-	point->openrecparsethread();		//create thread----parse the receive data
+	point->openrecparsethread();	//create thread----parse the receive data
 	point->openuploadthread();
 
-	while (1);
+	while (1)
+		;
 	time_t nowtime;
 	cJSON* publish_json;
 	cJSON* params_json;
@@ -419,8 +436,10 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		publish_json = cJSON_CreateObject();
 
 		cJSON_AddStringToObject(publish_json, "id", tmp);
-		cJSON_AddStringToObject(publish_json, "method", "method.event.property.post");
-		cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
+		cJSON_AddStringToObject(publish_json, "method",
+				"method.event.property.post");
+		cJSON_AddItemToObject(publish_json, "params", params_json =
+				cJSON_CreateObject());
 
 		int alluploadvarcount_temp = 0;	//记录已经上传的变量的数量
 
@@ -437,16 +456,19 @@ int MyAliyunMqtt::MqttMain(void* Params)
 				cJSON_AddNumberToObject(params_json, varname.c_str(), value);
 				alluploadvarcount_temp++;
 				//检查变量数量是否到达设定的数量或者该设备下已无可读变量，是则上发数据到指定主题
-				if ((alluploadvarcount_temp % uploadperiod) \
-					&& alluploadvarcount_temp != ThemeUpload[i].varcount)
+				if ((alluploadvarcount_temp % uploadperiod)
+						&& alluploadvarcount_temp != ThemeUpload[i].varcount)
 				{
 					continue;
 				}
 				alluploadvarcount_temp = 0;
-				point->publish(ThemeUpload[i].client, ThemeUpload[i].CtrlPub, ThemeUpload[i].QosPub, cJSON_PrintUnformatted(publish_json));
+				point->publish(ThemeUpload[i].client, ThemeUpload[i].CtrlPub,
+						ThemeUpload[i].QosPub,
+						cJSON_PrintUnformatted(publish_json));
 
 				cJSON_DeleteItemFromObject(publish_json, "params");
-				cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
+				cJSON_AddItemToObject(publish_json, "params", params_json =
+						cJSON_CreateObject());
 			}
 		}
 		for (int i = 0; i < ThemeUpload[0].UploadThemeqCount; i++)
@@ -464,10 +486,10 @@ int MyAliyunMqtt::MqttMain(void* Params)
 		sleep(ThemeUpload[0].PubPeriod);
 	}
 }
-int MyAliyunMqtt::MqttUpload(void* Param,void* ThemeUpload)
+int MyAliyunMqtt::MqttUpload(void* Param, void* ThemeUpload)
 {
-	MyAliyunMqtt* point = (MyAliyunMqtt*)Param;
-	ThemeUpload_t* ThemeUploadParam = (ThemeUpload_t*)ThemeUpload;
+	MyAliyunMqtt* point = (MyAliyunMqtt*) Param;
+	ThemeUpload_t* ThemeUploadParam = (ThemeUpload_t*) ThemeUpload;
 	time_t nowtime;
 	cJSON* publish_json;
 	cJSON* params_json;
@@ -480,8 +502,10 @@ int MyAliyunMqtt::MqttUpload(void* Param,void* ThemeUpload)
 		publish_json = cJSON_CreateObject();
 
 		cJSON_AddStringToObject(publish_json, "id", tmp);
-		cJSON_AddStringToObject(publish_json, "method", "method.event.property.post");
-		cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
+		cJSON_AddStringToObject(publish_json, "method",
+				"method.event.property.post");
+		cJSON_AddItemToObject(publish_json, "params", params_json =
+				cJSON_CreateObject());
 
 		int alluploadvarcount_temp = 0;	//记录已经上传的变量的数量
 		for (int j = 0; j < ThemeUploadParam->varcount; j++)
@@ -495,16 +519,19 @@ int MyAliyunMqtt::MqttUpload(void* Param,void* ThemeUpload)
 			cJSON_AddNumberToObject(params_json, varname.c_str(), value);
 			alluploadvarcount_temp++;
 			//检查变量数量是否到达设定的数量或者该设备下已无可读变量，是则上发数据到指定主题
-			if ((alluploadvarcount_temp % uploadperiod) \
-				&& alluploadvarcount_temp != ThemeUploadParam->varcount)
+			if ((alluploadvarcount_temp % uploadperiod)
+					&& alluploadvarcount_temp != ThemeUploadParam->varcount)
 			{
 				continue;
 			}
 			alluploadvarcount_temp = 0;
-			point->publish(ThemeUploadParam->client, ThemeUploadParam->CtrlPub, ThemeUploadParam->QosPub, cJSON_PrintUnformatted(publish_json));
+			point->publish(ThemeUploadParam->client, ThemeUploadParam->CtrlPub,
+					ThemeUploadParam->QosPub,
+					cJSON_PrintUnformatted(publish_json));
 
 			cJSON_DeleteItemFromObject(publish_json, "params");
-			cJSON_AddItemToObject(publish_json, "params", params_json = cJSON_CreateObject());
+			cJSON_AddItemToObject(publish_json, "params", params_json =
+					cJSON_CreateObject());
 		}
 		sleep(ThemeUploadParam->PubPeriod);
 	}

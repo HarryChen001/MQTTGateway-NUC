@@ -10,7 +10,8 @@
 #include"modbus/modbus.h"
 #include "MyData.h"
 
-class modbus {
+class modbus
+{
 public:
 	modbus();
 	~modbus();

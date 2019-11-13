@@ -12,7 +12,6 @@ using namespace sqlite3pp;
 using std::cout;
 using std::endl;
 
-
 MySqlite::MySqlite(char* dbname)
 {
 	db = database(dbname);
@@ -27,7 +26,7 @@ int MySqlite::selectfrom(char* tablename, char* format, ...)
 	char dest[100];
 	char dbcmd[200];
 
-	va_list	arg_list;
+	va_list arg_list;
 	va_start(arg_list, format); //һ��Ҫ��...��֮ǰ���Ǹ�����
 	vsprintf(dest, format, arg_list);
 	va_end(arg_list);
@@ -155,7 +154,7 @@ int MySqlite::GetAllInfo()
 	}
 	for (query::iterator i = qryDevParam.begin(); i != qryDevParam.end(); ++i)
 	{
-		LOG(INFO) << "GET Device Info" << endl;
+		LOG(INFO)<< "GET Device Info" << endl;
 		int portid = (*i).get<int>(4);
 		int portnums = -1;
 		for (int i = 0; i < SerialNums; i++)
@@ -174,9 +173,10 @@ int MySqlite::GetAllInfo()
 
 		Allinfo[portnums].devcount++;
 	}
-	for (query::iterator i = qryThemeUpload.begin(); i != qryThemeUpload.end(); ++i)
+	for (query::iterator i = qryThemeUpload.begin(); i != qryThemeUpload.end();
+			++i)
 	{
-		LOG(INFO) << "GET ThemeUpload Info" << endl;
+		LOG(INFO)<< "GET ThemeUpload Info" << endl;
 		int* j = &ThemeUpload[0].UploadThemeqCount;
 		ThemeUpload[*j].id = (*i).get<int>(0);
 		ThemeUpload[*j].Enable = (*i).get<int>(1);
@@ -223,8 +223,10 @@ int MySqlite::GetAllInfo()
 				break;
 			}
 		}
-		int* allvarcount = &Allinfo[allinfosubscript].deviceinfo[devsubscript].allvarcount;
-		VarParam_t* varparamtemp = &Allinfo[allinfosubscript].deviceinfo[devsubscript].allvarparams[*allvarcount];
+		int* allvarcount =
+				&Allinfo[allinfosubscript].deviceinfo[devsubscript].allvarcount;
+		VarParam_t* varparamtemp =
+				&Allinfo[allinfosubscript].deviceinfo[devsubscript].allvarparams[*allvarcount];
 
 		varparamtemp->id = id;
 		varparamtemp->DecimalsBit = DecimalsBit;
@@ -240,8 +242,9 @@ int MySqlite::GetAllInfo()
 
 		(*allvarcount)++;
 	}
-	LOG(INFO) << "Already Get Varparams" << endl << endl;
-	for (query::iterator i = qryThemeUploadList.begin(); i != qryThemeUploadList.end(); ++i)
+	LOG(INFO)<< "Already Get Varparams" << endl << endl;
+	for (query::iterator i = qryThemeUploadList.begin();
+			i != qryThemeUploadList.end(); ++i)
 	{
 		int uploadid = (*i).get<int>(3);
 		int devid = (*i).get<int>(5);
@@ -271,7 +274,8 @@ int MySqlite::GetAllInfo()
 					continue;
 				}
 				int* uploadcount = &Allinfo[i].deviceinfo[j].uploadvarcount;
-				VarParam_t* dest = &Allinfo[i].deviceinfo[j].uploadvarparam[*uploadcount];
+				VarParam_t* dest =
+						&Allinfo[i].deviceinfo[j].uploadvarparam[*uploadcount];
 				for (int k = 0; k < Allinfo[i].deviceinfo[j].allvarcount; k++)
 				{
 					VarParam_t* temp = &Allinfo[i].deviceinfo[j].allvarparams[k];
